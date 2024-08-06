@@ -55,7 +55,7 @@
                                                     </constraints>
                                                 </imageView>
                                                 <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="5 августа 2024" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="C7d-w2-LT2" userLabel="DateLabel">
-                                                    <rect key="frame" x="24.000000000000007" y="195" width="94.666666666666686" height="16"/>
+                                                    <rect key="frame" x="24.000000000000007" y="191.33333333333334" width="94.666666666666686" height="15.666666666666657"/>
                                                     <fontDescription key="fontDescription" type="system" pointSize="13"/>
                                                     <color key="textColor" name="YP White (iOS)"/>
                                                     <nil key="highlightedColor"/>
@@ -66,6 +66,7 @@
                                                 <constraint firstItem="pFr-qe-Pa0" firstAttribute="bottom" secondItem="8ah-pb-eMS" secondAttribute="bottom" id="JPT-F1-Mrb"/>
                                                 <constraint firstAttribute="bottom" secondItem="8ah-pb-eMS" secondAttribute="bottom" constant="4" id="L6k-FB-ynm"/>
                                                 <constraint firstItem="8ah-pb-eMS" firstAttribute="leading" secondItem="jW2-mV-wSZ" secondAttribute="leading" constant="16" id="Lg0-HO-gdm"/>
+                                                <constraint firstItem="8ah-pb-eMS" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="C7d-w2-LT2" secondAttribute="trailing" constant="8" id="XYL-Oe-hTU"/>
                                                 <constraint firstAttribute="trailing" secondItem="8ah-pb-eMS" secondAttribute="trailing" constant="16" id="ZP2-zs-Wbk"/>
                                                 <constraint firstItem="8ah-pb-eMS" firstAttribute="top" secondItem="jW2-mV-wSZ" secondAttribute="top" constant="4" id="vCd-zb-3xa"/>
                                                 <constraint firstItem="pFr-qe-Pa0" firstAttribute="leading" secondItem="8ah-pb-eMS" secondAttribute="leading" id="vRZ-iq-dsd"/>
@@ -76,7 +77,7 @@
                                             <constraint firstItem="C7d-w2-LT2" firstAttribute="leading" secondItem="8ah-pb-eMS" secondAttribute="leading" constant="8" id="0eS-J8-TPG"/>
                                             <constraint firstItem="8ah-pb-eMS" firstAttribute="trailing" secondItem="D86-Fn-sk7" secondAttribute="trailing" id="ljl-kT-0B7"/>
                                             <constraint firstItem="D86-Fn-sk7" firstAttribute="top" secondItem="8ah-pb-eMS" secondAttribute="top" id="qoT-bN-zPc"/>
-                                            <constraint firstItem="8ah-pb-eMS" firstAttribute="bottom" secondItem="C7d-w2-LT2" secondAttribute="bottom" constant="4" id="zsh-Uk-EnW"/>
+                                            <constraint firstItem="8ah-pb-eMS" firstAttribute="bottom" secondItem="C7d-w2-LT2" secondAttribute="bottom" constant="8" id="zsh-Uk-EnW"/>
                                         </constraints>
                                         <connections>
                                             <outlet property="cellImage" destination="8ah-pb-eMS" id="8ik-Ld-01Z"/>
