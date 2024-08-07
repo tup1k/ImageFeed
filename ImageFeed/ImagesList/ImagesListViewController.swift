@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ImagesListViewController: UIViewController {
+final class ImagesListViewController: UIViewController {
 
     @IBOutlet private var tableView: UITableView! // Создаем аутлет таблицы
     
@@ -31,7 +31,7 @@ class ImagesListViewController: UIViewController {
     }
     
     // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
-    func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
+    private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         
         guard let newImage = UIImage(named: photosName[indexPath.row]) else { return } // Проверяем наличие передаваемого фото в массиве
         cell.cellImage.image = newImage // Присваиваем его аутлету фотографий
@@ -59,7 +59,7 @@ class ImagesListViewController: UIViewController {
 extension ImagesListViewController: UITableViewDelegate {
     // Метод, отвечающий за действия при нажатии на фото
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    
+    // To do
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
