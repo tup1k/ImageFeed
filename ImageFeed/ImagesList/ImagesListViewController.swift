@@ -9,7 +9,7 @@
 import UIKit
 
 final class ImagesListViewController: UIViewController {
-
+    
     @IBOutlet private var tableView: UITableView! // Создаем аутлет таблицы
     
     private let photosName: [String] = Array(0..<20).map{"\($0)"} //Формируем текстовой массив из преобразованных чисел
@@ -25,7 +25,7 @@ final class ImagesListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         tableView.rowHeight = 200 // Высота ячейка равна 200
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
     }
@@ -42,7 +42,7 @@ final class ImagesListViewController: UIViewController {
         let oddImage = indexPath.row % 2 == 0
         let likeImage = oddImage ? UIImage.likeImageNonactive : UIImage.likeImageActive
         cell.likeButton.setImage(likeImage, for: .normal)
-       
+        
         // Скругление фото и области градиента
         cell.cellImage.layer.cornerRadius = 16 // Сделали скругление всех углов фотки (дублирование сториборда на всякий случай)
         cell.cellImage.layer.masksToBounds = true // Сделали обрезание всех подслоев фотки под радиус (дублирование сториборда на всякий случай)
@@ -54,12 +54,30 @@ final class ImagesListViewController: UIViewController {
         cell.gradientLayer.colors = [UIColor.gradientColor1.cgColor, UIColor.gradientColor2.cgColor] // наверное правильнее делать через alpha
         cell.gradientView.layer.addSublayer(cell.gradientLayer)
     }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "ShowSingleImage" {
+            guard
+                let viewController = segue.destination as? SingleImageViewController,
+                let indexPath = sender as? IndexPath
+            else {
+                assertionFailure("Invalid segue destination")
+                return
+            }
+            
+            let image = UIImage(named: photosName[indexPath.row])
+            _ = viewController.view
+            viewController.imageView.image = image
+        } else {
+            super.prepare(for: segue, sender: sender)
+        }
+    }
 }
 
 extension ImagesListViewController: UITableViewDelegate {
     // Метод, отвечающий за действия при нажатии на фото
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    // To do
+        performSegue(withIdentifier: "ShowSingleImage", sender: indexPath)
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
