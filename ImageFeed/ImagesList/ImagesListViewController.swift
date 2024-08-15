@@ -9,6 +9,7 @@
 import UIKit
 
 final class ImagesListViewController: UIViewController {
+    private let showSingleImageSegueIdentifier = "ShowSingleImage"
     
     @IBOutlet private var tableView: UITableView! // Создаем аутлет таблицы
     
@@ -34,8 +35,8 @@ final class ImagesListViewController: UIViewController {
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         
         guard let newImage = UIImage(named: photosName[indexPath.row]) else { return } // Проверяем наличие передаваемого фото в массиве
-        cell.cellImage.image = newImage // Присваиваем его аутлету фотографий
         
+        cell.cellImage.image = newImage // Присваиваем его аутлету фотографий
         cell.dateLabel.text = dateFormatter.string(from: Date()) // Присваиваем дату в нужном формате аутлету даты
         
         // Присваиваем кнопке картинку нажатого/ненажатого лайк из условия четности фото
@@ -56,7 +57,7 @@ final class ImagesListViewController: UIViewController {
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == "ShowSingleImage" {
+        if segue.identifier == showSingleImageSegueIdentifier {
             guard
                 let viewController = segue.destination as? SingleImageViewController,
                 let indexPath = sender as? IndexPath
@@ -66,8 +67,7 @@ final class ImagesListViewController: UIViewController {
             }
             
             let image = UIImage(named: photosName[indexPath.row])
-            _ = viewController.view
-            viewController.imageView.image = image
+            viewController.image = image
         } else {
             super.prepare(for: segue, sender: sender)
         }
@@ -77,7 +77,7 @@ final class ImagesListViewController: UIViewController {
 extension ImagesListViewController: UITableViewDelegate {
     // Метод, отвечающий за действия при нажатии на фото
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        performSegue(withIdentifier: "ShowSingleImage", sender: indexPath)
+        performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
