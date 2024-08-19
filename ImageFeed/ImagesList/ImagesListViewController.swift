@@ -29,6 +29,8 @@ final class ImagesListViewController: UIViewController {
         
         tableView.rowHeight = 200 // Высота ячейка равна 200
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
+        
+    
     }
     
     // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
@@ -72,6 +74,7 @@ final class ImagesListViewController: UIViewController {
             super.prepare(for: segue, sender: sender)
         }
     }
+    
 }
 
 extension ImagesListViewController: UITableViewDelegate {
@@ -80,6 +83,7 @@ extension ImagesListViewController: UITableViewDelegate {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
     
+    // Метод отвечающий за подгон размеров картинки в ячейке
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard let newImage = UIImage(named: photosName[indexPath.row]) else { return 0} // Проверяем наличие фото
         let imageDynamicWidth = tableView.bounds.width - 16 - 16
