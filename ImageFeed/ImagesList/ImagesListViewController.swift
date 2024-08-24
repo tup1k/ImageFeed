@@ -9,7 +9,8 @@
 import UIKit
 
 final class ImagesListViewController: UIViewController {
-
+    private let showSingleImageSegueIdentifier = "ShowSingleImage"
+    
     @IBOutlet private var tableView: UITableView! // Создаем аутлет таблицы
     
     private let photosName: [String] = Array(0..<20).map{"\($0)"} //Формируем текстовой массив из преобразованных чисел
@@ -25,24 +26,26 @@ final class ImagesListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         tableView.rowHeight = 200 // Высота ячейка равна 200
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
+        
+    
     }
     
     // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         
         guard let newImage = UIImage(named: photosName[indexPath.row]) else { return } // Проверяем наличие передаваемого фото в массиве
-        cell.cellImage.image = newImage // Присваиваем его аутлету фотографий
         
+        cell.cellImage.image = newImage // Присваиваем его аутлету фотографий
         cell.dateLabel.text = dateFormatter.string(from: Date()) // Присваиваем дату в нужном формате аутлету даты
         
         // Присваиваем кнопке картинку нажатого/ненажатого лайк из условия четности фото
         let oddImage = indexPath.row % 2 == 0
         let likeImage = oddImage ? UIImage.likeImageNonactive : UIImage.likeImageActive
         cell.likeButton.setImage(likeImage, for: .normal)
-       
+        
         // Скругление фото и области градиента
         cell.cellImage.layer.cornerRadius = 16 // Сделали скругление всех углов фотки (дублирование сториборда на всякий случай)
         cell.cellImage.layer.masksToBounds = true // Сделали обрезание всех подслоев фотки под радиус (дублирование сториборда на всякий случай)
@@ -54,14 +57,33 @@ final class ImagesListViewController: UIViewController {
         cell.gradientLayer.colors = [UIColor.gradientColor1.cgColor, UIColor.gradientColor2.cgColor] // наверное правильнее делать через alpha
         cell.gradientView.layer.addSublayer(cell.gradientLayer)
     }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == showSingleImageSegueIdentifier {
+            guard
+                let viewController = segue.destination as? SingleImageViewController,
+                let indexPath = sender as? IndexPath
+            else {
+                assertionFailure("Invalid segue destination")
+                return
+            }
+            
+            let image = UIImage(named: photosName[indexPath.row])
+            viewController.image = image
+        } else {
+            super.prepare(for: segue, sender: sender)
+        }
+    }
+    
 }
 
 extension ImagesListViewController: UITableViewDelegate {
     // Метод, отвечающий за действия при нажатии на фото
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-    // To do
+        performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
     
+    // Метод отвечающий за подгон размеров картинки в ячейке
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         guard let newImage = UIImage(named: photosName[indexPath.row]) else { return 0} // Проверяем наличие фото
         let imageDynamicWidth = tableView.bounds.width - 16 - 16
