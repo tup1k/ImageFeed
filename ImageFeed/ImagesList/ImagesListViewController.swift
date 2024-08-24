@@ -27,7 +27,6 @@ final class ImagesListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.rowHeight = 200 // Высота ячейка равна 200
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
         
     
@@ -47,15 +46,8 @@ final class ImagesListViewController: UIViewController {
         cell.likeButton.setImage(likeImage, for: .normal)
         
         // Скругление фото и области градиента
-        cell.cellImage.layer.cornerRadius = 16 // Сделали скругление всех углов фотки (дублирование сториборда на всякий случай)
-        cell.cellImage.layer.masksToBounds = true // Сделали обрезание всех подслоев фотки под радиус (дублирование сториборда на всякий случай)
-        cell.gradientView.layer.cornerRadius = 16 // Делаем скругление радиусов поля градиента (обязательно дополнение про нижние углы)
-        cell.gradientView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner] // Тут мы определяем что скругление только по нижним углам
-        
-        // Создание градиента внизу каждого фото
-        cell.gradientLayer.frame = cell.gradientView.bounds
-        cell.gradientLayer.colors = [UIColor.gradientColor1.cgColor, UIColor.gradientColor2.cgColor] // наверное правильнее делать через alpha
-        cell.gradientView.layer.addSublayer(cell.gradientLayer)
+        cell.setupCellImage()
+        cell.setupGradientLayer() // вызываем инкапсулированную функцию свойств градиента
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
