@@ -222,7 +222,7 @@
                                     <userDefinedRuntimeAttribute type="boolean" keyPath="layer.masksToBounds" value="YES"/>
                                 </userDefinedRuntimeAttributes>
                                 <connections>
-                                    <segue destination="gsI-Zi-0ZS" kind="show" identifier="ShowWebView" id="gl4-bL-dQn"/>
+                                    <segue destination="gsI-Zi-0ZS" kind="presentation" identifier="ShowWebView" modalPresentationStyle="overFullScreen" id="gl4-bL-dQn"/>
                                 </connections>
                             </button>
                         </subviews>
@@ -241,7 +241,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LSo-rO-B7x" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="4257.2519083969464" y="-508.45070422535213"/>
+            <point key="canvasLocation" x="1375" y="-1375"/>
         </scene>
         <!--WebViewViewController-->
         <scene sceneID="5pz-bP-dSG">
@@ -252,13 +252,29 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <wkWebView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="2xa-ME-0O1">
-                                <rect key="frame" x="0.0" y="103" width="393" height="749"/>
+                                <rect key="frame" x="0.0" y="53" width="393" height="799"/>
                                 <color key="backgroundColor" name="YP White (iOS)"/>
                                 <wkWebViewConfiguration key="configuration">
                                     <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
                                     <wkPreferences key="preferences"/>
                                 </wkWebViewConfiguration>
                             </wkWebView>
+                            <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="HcF-Tn-dXB">
+                                <rect key="frame" x="0.0" y="0.0" width="393" height="4"/>
+                                <color key="progressTintColor" name="YP Black (iOS)"/>
+                            </progressView>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="mUk-LM-Fz2" userLabel="backButton">
+                                <rect key="frame" x="9" y="9" width="64" height="44"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="44" id="5E4-Aj-4uI"/>
+                                    <constraint firstAttribute="width" constant="64" id="AQ7-QB-QSV"/>
+                                </constraints>
+                                <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
+                                <state key="normal" title="Button" image="nav_back_button"/>
+                                <connections>
+                                    <action selector="didTapBackButton:" destination="gsI-Zi-0ZS" eventType="touchUpInside" id="bu2-sV-GZ1"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="WGE-4X-Zpd"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -266,17 +282,23 @@
                             <constraint firstAttribute="bottom" secondItem="2xa-ME-0O1" secondAttribute="bottom" id="00u-Ak-R3z"/>
                             <constraint firstAttribute="trailing" secondItem="2xa-ME-0O1" secondAttribute="trailing" id="M07-9A-iro"/>
                             <constraint firstItem="2xa-ME-0O1" firstAttribute="leading" secondItem="VHl-oP-Hrs" secondAttribute="leading" id="Os5-qD-sVh"/>
-                            <constraint firstItem="2xa-ME-0O1" firstAttribute="top" secondItem="WGE-4X-Zpd" secondAttribute="top" id="UiJ-T3-AM6"/>
+                            <constraint firstItem="mUk-LM-Fz2" firstAttribute="top" secondItem="WGE-4X-Zpd" secondAttribute="top" constant="9" id="UX9-1b-P65"/>
+                            <constraint firstItem="2xa-ME-0O1" firstAttribute="top" secondItem="mUk-LM-Fz2" secondAttribute="bottom" id="UiJ-T3-AM6"/>
+                            <constraint firstItem="HcF-Tn-dXB" firstAttribute="leading" secondItem="WGE-4X-Zpd" secondAttribute="leading" id="YYJ-go-Xmj"/>
+                            <constraint firstItem="WGE-4X-Zpd" firstAttribute="trailing" secondItem="HcF-Tn-dXB" secondAttribute="trailing" id="hTB-lV-7o6"/>
+                            <constraint firstItem="HcF-Tn-dXB" firstAttribute="top" secondItem="WGE-4X-Zpd" secondAttribute="top" id="msS-g2-qYg"/>
+                            <constraint firstItem="mUk-LM-Fz2" firstAttribute="leading" secondItem="WGE-4X-Zpd" secondAttribute="leading" constant="9" id="nTg-S6-fZm"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" id="iL3-Mt-Ds3"/>
                     <connections>
+                        <outlet property="progressView" destination="HcF-Tn-dXB" id="6GW-gQ-aiJ"/>
                         <outlet property="webView" destination="2xa-ME-0O1" id="eeq-0l-YDw"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="Whg-nq-S1k" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="5040.4580152671751" y="-508.45070422535213"/>
+            <point key="canvasLocation" x="2325.9541984732823" y="-1375.3521126760563"/>
         </scene>
         <!--Tab Bar Controller-->
         <scene sceneID="Xre-2k-PEL">
@@ -316,6 +338,21 @@
             </objects>
             <point key="canvasLocation" x="1375" y="401"/>
         </scene>
+        <!--SplashViewController-->
+        <scene sceneID="w2g-Yv-CWt">
+            <objects>
+                <viewController title="SplashViewController" id="GET-Hx-r0o" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Rs0-FF-c6E">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <viewLayoutGuide key="safeArea" id="FHA-Br-5tW"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="34i-fd-f8j" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="-661" y="-1373"/>
+        </scene>
         <!--Navigation Controller-->
         <scene sceneID="nfa-ji-MAW">
             <objects>
@@ -332,7 +369,7 @@
                 </navigationController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="1G5-ah-pQi" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3330.5343511450378" y="-508.45070422535213"/>
+            <point key="canvasLocation" x="331" y="-1375"/>
         </scene>
     </scenes>
     <resources>
@@ -341,6 +378,7 @@
         <image name="ShareButton" width="50" height="50"/>
         <image name="SingleImageBackButton" width="24" height="24"/>
         <image name="authorizViewLogo" width="60" height="60"/>
+        <image name="nav_back_button" width="24" height="24"/>
         <image name="tab_editorial_active" width="30" height="30"/>
         <image name="tab_profile_active" width="30" height="30"/>
         <namedColor name="Color">
