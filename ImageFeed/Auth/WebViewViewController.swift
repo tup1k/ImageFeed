@@ -29,8 +29,8 @@ final class WebViewViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        webView.navigationDelegate = self // навигационный делегат между webview и webviewviewcontroller (разобраться)
         loadAuthView() // Загрузка во webView экрана авторизации из сервиса Unsplash
+        webView.navigationDelegate = self // навигационный делегат между webview и webviewviewcontroller (разобраться)
         updateProgress() // Обозреватель за изменением статуса загрузки через прогресс-бар
     }
     
@@ -101,8 +101,6 @@ final class WebViewViewController: UIViewController {
         progressView.progress = Float(webView.estimatedProgress)
         progressView.isHidden = fabs(webView.estimatedProgress - 1.0) <= 0.0001
     }
-    
-    
 }
 
 // Расширение описывае один из методов навигационного делегата позволяющий совершать действия при совпадении параметра code
@@ -115,6 +113,7 @@ extension WebViewViewController: WKNavigationDelegate {
     ) {
         if let code = code(from: navigationAction) {
             delegate?.webViewViewController(self, didAuthenticateWithCode: code)
+            print("Это код \(code)")
             decisionHandler(.cancel)
         } else {
             decisionHandler(.allow)
