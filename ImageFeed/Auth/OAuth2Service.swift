@@ -8,6 +8,7 @@
 import Foundation
 
 final class OAuth2Service {
+    
     func makeOAuthTokenRequest(code: String) -> URLRequest {
         guard var baseURL = URLComponents(string: "https://unsplash.com/oauth/token") else {
             print("Не подгрузилась ссылка на сервис авторизации Unsplash")
@@ -32,10 +33,24 @@ final class OAuth2Service {
         return request
     }
     
-    
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
-        makeOAuthTokenRequest(code: code)
-        
-        completion(.success("")) // TODO [Sprint 10]
+        let newRequest = makeOAuthTokenRequest(code: code)
+        let codeData2 = URLSession.shared.data(for: newRequest) { result in
+            switch result {
+            case .success(let data):
+                do {
+                    let decoder = JSONDecoder()
+                    let response = try decoder.decode(OAuthTokenResponseBody.self, from: data)
+                    DispatchQueue.main.async {
+                        completion(.success(response.access_token)) // TODO [Sprint 10]
+                    }
+                } catch {
+                    completion(.failure(error))
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
     }
 }
+

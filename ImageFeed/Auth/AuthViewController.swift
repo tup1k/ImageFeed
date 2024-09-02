@@ -8,7 +8,10 @@
 import UIKit
 
 final class AuthViewController: UIViewController {
-    private let webViewIdentificator = "ShowWebView"
+    
+    private let authService = OAuth2Service()
+    
+    private let webViewIdentificator = "ShowWebView" // Идентификатор сигвэя между стартовым окном и окном авторизации
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == webViewIdentificator {
@@ -24,8 +27,17 @@ final class AuthViewController: UIViewController {
 
 
 extension AuthViewController: WebViewViewControllerDelegate {
+    
+    
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) {
-        // TODO
+        authService.fetchOAuthToken(code) { result in
+            switch result {
+            case .success(let token):
+                OAuth2TokenStorage().token = token
+            case .failure(let error):
+                print(error)
+            }
+        }
     }
     
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {

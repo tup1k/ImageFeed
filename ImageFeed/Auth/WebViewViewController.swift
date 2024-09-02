@@ -8,34 +8,54 @@
 import UIKit
 import WebKit
 
+// Протокол определяющий методы делегирования между окном авторизации и окном веб-контента
 protocol WebViewViewControllerDelegate: AnyObject {
-    func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String)
+    func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) // Тот кто придумал одинаковые названия плохой человек!!!!!
     func webViewViewControllerDidCancel(_ vc: WebViewViewController)
 }
 
+// Ссылка для авторизации на сайте
 enum WebViewConstants {
-    static let unsplashAuthorizeURLString = "https://unsplash.com/oauth/authorize" // ссылка для авторизации на сайте
+    static let unsplashAuthorizeURLString = "https://unsplash.com/oauth/authorize"
 }
 
 final class WebViewViewController: UIViewController {
     @IBOutlet private var webView: WKWebView! // Аутлет веб-формы
     @IBOutlet weak var progressView: UIProgressView! // Аутлет прогресс-бара
     
-    weak var delegate: WebViewViewControllerDelegate?
+    weak var delegate: WebViewViewControllerDelegate? // Создаем делегата для контроллера (разобраться)
     
+    // поток загрузки контроллера
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        webView.navigationDelegate = self // делегирование проверки авторизации (разобраться)
-        loadAuthView() // Загрузка авторизации из сервиса Unsplash
+        webView.navigationDelegate = self // навигационный делегат между webview и webviewviewcontroller (разобраться)
+        loadAuthView() // Загрузка во webView экрана авторизации из сервиса Unsplash
+        updateProgress() // Обозреватель за изменением статуса загрузки через прогресс-бар
+    }
+    
+    // поток появления контроллера - добавляем отслеживание
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        webView.addObserver(
+            self,
+            forKeyPath: #keyPath(WKWebView.estimatedProgress),
+            options: .new,
+            context: nil)
         updateProgress()
     }
+    
+    // поток исчезновения контроллера - удаляем отслеживание
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
+    }
+    
     
     // Кнопка возврата из окна авторизации сделаная аутлетом
     @IBAction func didTapBackButton(_ sender: Any) {
         delegate?.webViewViewControllerDidCancel(self)
     }
-    
     
     // Метод сбора ссылки и загрузки окна авторизации
     private func loadAuthView() {
@@ -44,7 +64,7 @@ final class WebViewViewController: UIViewController {
             print("Не подгрузилась ссылка на сервис авторизации Unsplash")
             return
         }
-
+        
         // Прописываем в URLQueryItems параметры API необходимые для авторизации в мое приложение
         urlComponents.queryItems = [
             URLQueryItem(name: "client_id", value: Constants.accessKey),
@@ -63,21 +83,7 @@ final class WebViewViewController: UIViewController {
         webView.load(request) // подгружаем во вебвью наш экран авторизации
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        webView.addObserver(
-            self,
-            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-            options: .new,
-            context: nil)
-        updateProgress()
-    }
-   
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
-    }
-    
+    // Метод наблядателя за изменением для прогесс-бара
     override func observeValue(
         forKeyPath keyPath: String?,
         of object: Any?,
@@ -99,6 +105,7 @@ final class WebViewViewController: UIViewController {
     
 }
 
+// Расширение описывае один из методов навигационного делегата позволяющий совершать действия при совпадении параметра code
 extension WebViewViewController: WKNavigationDelegate {
     // Метод определяющий действия при успешной авторизации
     func webView(
