@@ -42,7 +42,7 @@ final class OAuth2Service {
                     let decoder = JSONDecoder()
                     let response = try decoder.decode(OAuthTokenResponseBody.self, from: data)
                     DispatchQueue.main.async {
-                        completion(.success(response.access_token)) // TODO [Sprint 10]
+                        completion(.success(response.access_token))
                     }
                 } catch {
                     completion(.failure(error))
@@ -51,6 +51,7 @@ final class OAuth2Service {
                 completion(.failure(error))
             }
         }
+        codeData2.resume()
     }
 }
 

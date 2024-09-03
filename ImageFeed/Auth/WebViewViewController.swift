@@ -29,8 +29,8 @@ final class WebViewViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        loadAuthView() // Загрузка во webView экрана авторизации из сервиса Unsplash
         webView.navigationDelegate = self // навигационный делегат между webview и webviewviewcontroller (разобраться)
+        loadAuthView() // Загрузка во webView экрана авторизации из сервиса Unsplash
         updateProgress() // Обозреватель за изменением статуса загрузки через прогресс-бар
     }
     
