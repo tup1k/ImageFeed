@@ -7,11 +7,15 @@
 
 import Foundation
 
+// Класс получения токена авторизации
 final class OAuth2Service {
+    static let shared = OAuth2Service()
+    private init () {}
     
-    func makeOAuthTokenRequest(code: String) -> URLRequest {
+    // Метод сборки ссылки для запроса JSON токена авторизации
+    func makeOAuthTokenRequest(code: String) -> URLRequest? {
         guard var baseURL = URLComponents(string: "https://unsplash.com/oauth/token") else {
-            print("Не подгрузилась ссылка на сервис авторизации Unsplash")
+            print("Не подгрузилась ссылка на сервис авторизации Unsplash.")
             fatalError()
         }
         
@@ -20,12 +24,13 @@ final class OAuth2Service {
             URLQueryItem(name: "client_secret", value: Constants.secretKey),
             URLQueryItem(name: "redirect_uri", value: Constants.redirectURI),
             URLQueryItem(name: "code", value: code),
-            URLQueryItem(name: "grant_type", value: "authorization_code")]
+            URLQueryItem(name: "grant_type", value: "authorization_code")
+        ]
         
         // создаем ссылку со всеми параметрами API
         guard let url = baseURL.url else {
             print("Не собралась общая ссылка авторизации с ключами")
-            fatalError()
+            return nil
         }
         
         var request = URLRequest(url: url) // Создаем запрос собранной ссылки для авторизации в мое приложение
@@ -33,8 +38,13 @@ final class OAuth2Service {
         return request
     }
     
+    // Метод считывания JSON через расширение URLSession и парсинг по структуре responsebody
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
-        let newRequest = makeOAuthTokenRequest(code: code)
+        guard let newRequest = makeOAuthTokenRequest(code: code) else {
+            print("Не удалось сделать сетевой запрос")
+            return
+        }
+        
         let codeData2 = URLSession.shared.data(for: newRequest) { result in
             switch result {
             case .success(let data):
@@ -45,10 +55,16 @@ final class OAuth2Service {
                         completion(.success(response.access_token))
                     }
                 } catch {
-                    completion(.failure(error))
+                    DispatchQueue.main.async {
+                        completion(.failure(error))
+                        print("Ошибка декодирования JSON: \(error)")
+                    }
                 }
             case .failure(let error):
-                completion(.failure(error))
+                DispatchQueue.main.async {
+                    completion(.failure(error))
+                    print("Ошибка загрузки JSON: \(error)")
+                }
             }
         }
         codeData2.resume()

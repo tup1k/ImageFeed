@@ -7,6 +7,7 @@
 
 import Foundation
 
-struct OAuthTokenResponseBody: Codable {
+// Структура данных получаемых при распарсивании JSON
+struct OAuthTokenResponseBody: Decodable {
         let access_token: String // токен
 }

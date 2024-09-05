@@ -1,8 +1,8 @@
 //
-//  URLSession+data.swift
+//  URLSession+data_.swift
 //  ImageFeed
 //
-//  Created by Олег Кор on 29.08.2024.
+//  Created by Олег Кор on 03.09.2024.
 //
 
 import Foundation
@@ -13,6 +13,7 @@ enum NetworkError: Error {  // 1
     case urlSessionError
 }
 
+// Добавляем для класса URLSession метод считывания ответа сервера
 extension URLSession {
     func data(
         for request: URLRequest,
@@ -42,4 +43,3 @@ extension URLSession {
         return task
     }
 }
-

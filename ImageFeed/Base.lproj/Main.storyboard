@@ -270,7 +270,7 @@
                                     <constraint firstAttribute="width" constant="64" id="AQ7-QB-QSV"/>
                                 </constraints>
                                 <inset key="imageEdgeInsets" minX="0.0" minY="0.0" maxX="2.2250738585072014e-308" maxY="0.0"/>
-                                <state key="normal" title="Button" image="nav_back_button"/>
+                                <state key="normal" title=" " image="nav_back_button"/>
                                 <connections>
                                     <action selector="didTapBackButton:" destination="gsI-Zi-0ZS" eventType="touchUpInside" id="bu2-sV-GZ1"/>
                                 </connections>

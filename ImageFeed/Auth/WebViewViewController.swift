@@ -10,7 +10,7 @@ import WebKit
 
 // Протокол определяющий методы делегирования между окном авторизации и окном веб-контента
 protocol WebViewViewControllerDelegate: AnyObject {
-    func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String) // Тот кто придумал одинаковые названия плохой человек!!!!!
+    func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String)
     func webViewViewControllerDidCancel(_ vc: WebViewViewController)
 }
 
@@ -51,8 +51,7 @@ final class WebViewViewController: UIViewController {
         webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
     }
     
-    
-    // Кнопка возврата из окна авторизации сделаная аутлетом
+    // Кнопка возврата из окна авторизации сделаная аутлетом и делегирующая ответственность
     @IBAction func didTapBackButton(_ sender: Any) {
         delegate?.webViewViewControllerDidCancel(self)
     }
@@ -83,7 +82,7 @@ final class WebViewViewController: UIViewController {
         webView.load(request) // подгружаем во вебвью наш экран авторизации
     }
     
-    // Метод наблядателя за изменением для прогесс-бара
+    // Метод наблюдателя за изменением для прогесс-бара
     override func observeValue(
         forKeyPath keyPath: String?,
         of object: Any?,
@@ -97,14 +96,16 @@ final class WebViewViewController: UIViewController {
         }
     }
     
+    // Метод вычисление процентов загрузки прогресс бара
     private func updateProgress() {
         progressView.progress = Float(webView.estimatedProgress)
         progressView.isHidden = fabs(webView.estimatedProgress - 1.0) <= 0.0001
     }
 }
 
-// Расширение описывае один из методов навигационного делегата позволяющий совершать действия при совпадении параметра code
+// Расширение описывает один из методов навигационного делегата позволяющий совершать действия при совпадении параметра code
 extension WebViewViewController: WKNavigationDelegate {
+    
     // Метод определяющий действия при успешной авторизации
     func webView(
         _ webView: WKWebView,
@@ -113,7 +114,6 @@ extension WebViewViewController: WKNavigationDelegate {
     ) {
         if let code = code(from: navigationAction) {
             delegate?.webViewViewController(self, didAuthenticateWithCode: code)
-            print("Это код \(code)")
             decisionHandler(.cancel)
         } else {
             decisionHandler(.allow)
