@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import ProgressHUD
 
 final class SplashViewController: UIViewController {
     
@@ -62,7 +63,9 @@ extension SplashViewController: AuthViewControllerDelegate {
         vc.dismiss(animated: true) // Закрыли WebView
         
         // Мы проверям наличие токена в сохраненных данных
+        ProgressHUD.animate()
         service.fetchOAuthToken(code) { result in
+            ProgressHUD.dismiss()
             switch result {
             case .success(let token):
                 self.tokenStorage.token = token

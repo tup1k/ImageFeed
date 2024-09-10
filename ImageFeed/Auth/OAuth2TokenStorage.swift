@@ -8,17 +8,17 @@
 import Foundation
 
 // Класс записывает даные токена в память устройства в UserDefaults
-class OAuth2TokenStorage {
+final class OAuth2TokenStorage {
     private let userData: UserDefaults = .standard // Вводим замену для упрощения
     
     // Параметр - токен
-        var token: String? {
-            get {
-                userData.string(forKey: "token")
-            }
-            
-            set {
-                userData.set(newValue, forKey: "token")
-            }
+    var token: String? {
+        get {
+            userData.string(forKey: "token")
         }
+        
+        set {
+            userData.set(newValue, forKey: "token")
+        }
+    }
 }
