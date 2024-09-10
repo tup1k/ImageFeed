@@ -9,15 +9,24 @@ import UIKit
 
 final class ProfileViewController: UIViewController {
     
-    let profileDesign = UIImageView()
-    let nameLabel = UILabel()
-    let accountName = UILabel()
-    let accountDescription = UILabel()
-    let signOutButton = UIButton()
+    private let profileDesign = UIImageView()
+    private let nameLabel = UILabel()
+    private let accountName = UILabel()
+    private let accountDescription = UILabel()
+    private let signOutButton = UIButton()
     
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        [profileDesign,
+         nameLabel,
+         accountName,
+         accountDescription,
+         signOutButton].forEach {
+            $0.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview($0)
+        }
         
         profileDesignFunc() // Вызов функции создания вью профиля
         nameLabelFunc() // Вызов функции создания лейбла ФИО
@@ -29,8 +38,6 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания вью профиля кодом
     private func profileDesignFunc() {
-        profileDesign.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(profileDesign)
         let profileImage = UIImage(named: "ProfileImage")
         profileDesign.image = profileImage
         profileDesign.tintColor = .gray
@@ -45,8 +52,6 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания лейбла с ФИО
     private func nameLabelFunc() {
-        nameLabel.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(nameLabel)
         nameLabel.text = "Екатерина Новикова"
         nameLabel.textColor = .ypWhiteIOS
         nameLabel.font = nameLabel.font.withSize(23)
@@ -60,8 +65,6 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания лейбла с именем аккаунта
     private func accountNameFunc() {
-        accountName.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(accountName)
         accountName.text = "@ekaterina_nov"
         accountName.textColor = .gray
         accountName.font = accountName.font.withSize(13)
@@ -75,8 +78,6 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания статуса аккаунта
     private func accountDescriptionFunc() {
-        accountDescription.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(accountDescription)
         accountDescription.text = "Hello, World!"
         accountDescription.textColor = .ypWhiteIOS
         accountDescription.font = accountDescription.font.withSize(13)
@@ -90,9 +91,6 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания кнопки выхода из аккаунта
     private func signOutButtonFunc() {
-        signOutButton.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(signOutButton)
-        //signOutButton.tintColor = .ypRedIOS
         let signOutButtonImage = UIImage(named: "LogOutImage")
         signOutButton.setImage(signOutButtonImage, for: .normal)
         
