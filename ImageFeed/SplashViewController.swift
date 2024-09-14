@@ -63,9 +63,9 @@ extension SplashViewController: AuthViewControllerDelegate {
         vc.dismiss(animated: true) // Закрыли WebView
         
         // Мы проверям наличие токена в сохраненных данных
-        ProgressHUD.animate()
+        UIBlockingProgressHUD.show()
         service.fetchOAuthToken(code) { result in
-            ProgressHUD.dismiss()
+            UIBlockingProgressHUD.dismiss()
             switch result {
             case .success(let token):
                 self.tokenStorage.token = token
