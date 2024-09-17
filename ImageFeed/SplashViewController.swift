@@ -96,7 +96,7 @@ extension SplashViewController: AuthViewControllerDelegate {
                 self.profileImageSVC.fetchProfileImageURL(username: userName) {_ in}
                 self.switchToTabBarController()
             case .failure(let error):
-                print("Ошибка считывания токена: \(error)")
+                print("Ошибка загрузки данных в SVC: \(error)")
                 break
             }
         }

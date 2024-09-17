@@ -18,6 +18,53 @@ final class ProfileViewController: UIViewController {
     private let profileInfoPVC = ProfileService.shared
     private let profileImagePVC = ProfileImageService.shared
     private let tokenStoragePVC = OAuth2TokenStorage()
+    private var profileImageServiceObserver: NSObjectProtocol?
+    
+    
+    
+    override init(nibName: String?, bundle: Bundle?) {
+        super.init(nibName: nibName, bundle: bundle)
+        addObserver()
+    }
+    
+    required init?(coder: NSCoder) {
+            super.init(coder: coder)
+            addObserver()
+        }
+    
+    deinit {
+            removeObserver()
+        }
+    
+    private func addObserver() {
+           NotificationCenter.default.addObserver(
+               self,
+               selector: #selector(updateAvatar(notification:)),
+               name: ProfileImageService.didChangeNotification,
+               object: nil)
+       }
+    
+    private func removeObserver() {
+            NotificationCenter.default.removeObserver(
+                self,
+                name: ProfileImageService.didChangeNotification,
+                object: nil)
+        }
+    
+    
+    @objc
+        private func updateAvatar(notification: Notification) {
+            guard
+                isViewLoaded,
+                let userInfo = notification.userInfo,
+                let profileImageURL = userInfo["URL"] as? String,
+                let url = URL(string: profileImageURL)
+            else { return }
+            
+            // TODO [Sprint 11] Обновите аватар, используя Kingfisher
+        }
+    
+    
     
     
     
@@ -39,25 +86,41 @@ final class ProfileViewController: UIViewController {
         accountDescriptionFunc() // Вызов функции создания статуса аккаунта
         signOutButtonFunc() // Вызов функции создания кнопки выхода из аккаунта
         
-        self.nameLabel.text = profileInfoPVC.profile?.name
-        self.accountName.text = profileInfoPVC.profile?.loginName
-        self.accountDescription.text = profileInfoPVC.profile?.bio
+        updateProfileDetails(profile: profileInfoPVC.profile!)
         
-        let myURLString = profileImagePVC.fetchProfileImageURL(username: profileInfoPVC.profile!.userName) { _ in }
-        print(myURLString)
+  
+        profileImageServiceObserver = NotificationCenter.default    // 2
+                    .addObserver(
+                        forName: ProfileImageService.didChangeNotification, // 3
+                        object: nil,                                        // 4
+                        queue: .main                                        // 5
+                    ) { [weak self] _ in
+                        guard let self = self else { return }
+                        self.updateAvatar()                                 // 6
+                    }
+                updateAvatar()
     }
     
+    private func updateAvatar() {                                   // 8
+        guard
+            let profileImageURL = profileImagePVC.avatarURL,
+            let url = URL(string: profileImageURL)
+        else { return }
+        print(profileImageURL)
+        // TODO [Sprint 11] Обновить аватар, используя Kingfisher
+    }
+    
+    // Метод загрузки данных профиля с сайта
     private func updateProfileDetails(profile: Profile) {
-            nameLabel.text = profile.name
-            accountName.text = profile.userName
-            accountDescription.text = profile.bio
-            print(profile.name)
+        nameLabel.text = profile.name
+        accountName.text = profile.loginName
+        accountDescription.text = profile.bio
     }
     
     // Функция создания вью профиля кодом
     private func profileDesignFunc() {
-        let profileImage = UIImage(named: "ProfileImage")
-        profileDesign.image = profileImage
+//       let profileImage = UIImage(named: "ProfileImage")
+//        profileDesign.image = profileImage
         profileDesign.tintColor = .gray
         
         NSLayoutConstraint.activate([

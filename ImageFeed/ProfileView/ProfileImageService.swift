@@ -31,7 +31,8 @@ final class ProfileImageService {
     private var profileInfo = ProfileService.shared
     private let tokenStoragePVC = OAuth2TokenStorage()
     
-    
+    static let didChangeNotification = Notification.Name(rawValue: "ProfileImageProviderDidChange")
+  
     static let shared = ProfileImageService()
     private init () {}
     
@@ -48,7 +49,7 @@ final class ProfileImageService {
         
         guard let newRequest = makeProfileImageRequest(token: tokenStoragePVC.token!, username: profileInfo.profile!.userName) else {
             completion(.failure(AuthServiceError.invalidRequest))
-            print("Не удалось сделать сетевой запрос")
+            print("Не удалось сделать сетевой запрос для URL")
             return
         }
         let task = urlSession.data(for: newRequest) { result in
@@ -62,23 +63,29 @@ final class ProfileImageService {
                         let smallImage = response.profileImage.smallProfImage
                         self.avatarURL = smallImage
                         completion(.success(self.avatarURL!))
-                        //self.task = nil
-                       // self.lastToken = nil
+//                        self.task = nil
+//                        self.lastUsername = nil
+                        
+                        NotificationCenter.default
+                            .post(
+                                name: ProfileImageService.didChangeNotification,
+                                object: self,
+                                userInfo: ["URL": self.avatarURL as Any])
                     }
                 } catch {
                     DispatchQueue.main.async {
                         completion(.failure(error))
-                        print("Ошибка декодирования JSON: \(error)")
-                        self.task = nil
-                        //self.lastToken = nil
+                        print("Ошибка декодирования JSON для URL: \(error)")
+//                        self.task = nil
+//                        self.lastUsername = nil
                     }
                 }
             case .failure(let error):
                 DispatchQueue.main.async {
                     completion(.failure(error))
-                    print("Ошибка загрузки JSON: \(error)")
-                    self.task = nil
-                    //self.lastToken = nil
+                    print("Ошибка загрузки JSON для URL: \(error)")
+//                    self.task = nil
+//                    self.lastUsername = nil
                 }
             }
         }
@@ -90,7 +97,7 @@ final class ProfileImageService {
     private func makeProfileImageRequest(token: String, username: String) -> URLRequest? {
         
         guard let url  = URL(string: "https://api.unsplash.com/users/\(username)") else {
-            print("Не работает ссылка на профиль")
+            print("Не работает ссылка на профиль для URL")
             assertionFailure("Failed to create URL")
             return nil
         }
