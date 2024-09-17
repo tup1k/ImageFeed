@@ -15,6 +15,11 @@ final class ProfileViewController: UIViewController {
     private let accountDescription = UILabel()
     private let signOutButton = UIButton()
     
+    private let profileInfoPVC = ProfileService.shared
+    private let profileImagePVC = ProfileImageService.shared
+    private let tokenStoragePVC = OAuth2TokenStorage()
+    
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,6 +39,19 @@ final class ProfileViewController: UIViewController {
         accountDescriptionFunc() // Вызов функции создания статуса аккаунта
         signOutButtonFunc() // Вызов функции создания кнопки выхода из аккаунта
         
+        self.nameLabel.text = profileInfoPVC.profile?.name
+        self.accountName.text = profileInfoPVC.profile?.loginName
+        self.accountDescription.text = profileInfoPVC.profile?.bio
+        
+        let myURLString = profileImagePVC.fetchProfileImageURL(username: profileInfoPVC.profile!.userName) { _ in }
+        print(myURLString)
+    }
+    
+    private func updateProfileDetails(profile: Profile) {
+            nameLabel.text = profile.name
+            accountName.text = profile.userName
+            accountDescription.text = profile.bio
+            print(profile.name)
     }
     
     // Функция создания вью профиля кодом
@@ -52,7 +70,7 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания лейбла с ФИО
     private func nameLabelFunc() {
-        nameLabel.text = "Екатерина Новикова"
+        //nameLabel.text = "Екатерина Новикова"
         nameLabel.textColor = .ypWhiteIOS
         nameLabel.font = nameLabel.font.withSize(23)
         
@@ -65,7 +83,7 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания лейбла с именем аккаунта
     private func accountNameFunc() {
-        accountName.text = "@ekaterina_nov"
+        //accountName.text = "@ekaterina_nov"
         accountName.textColor = .gray
         accountName.font = accountName.font.withSize(13)
         
@@ -78,7 +96,7 @@ final class ProfileViewController: UIViewController {
     
     // Функция создания статуса аккаунта
     private func accountDescriptionFunc() {
-        accountDescription.text = "Hello, World!"
+        //accountDescription.text = "Hello, World!"
         accountDescription.textColor = .ypWhiteIOS
         accountDescription.font = accountDescription.font.withSize(13)
         

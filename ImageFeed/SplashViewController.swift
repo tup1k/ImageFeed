@@ -11,16 +11,19 @@ import ProgressHUD
 final class SplashViewController: UIViewController {
     
     private let showAuthenticationScreenSegueIdentifier = "ShowAuthScreen" // Идентификатор сигвэя между стартовым окном и окном авторизации
-    
     private let service = OAuth2Service.shared // Вызов синглтона
-    private let tokenStorage = OAuth2TokenStorage()
+    private let profileInfoSVC = ProfileService.shared // Ссылка на класс ProfileService
+    private let profileImageSVC = ProfileImageService.shared // Ссылка на класс ProfileImageService
+
+    private let tokenStorageSVC = OAuth2TokenStorage()
     
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        if let token = tokenStorage.token {
-            switchToTabBarController()
+        if let token = tokenStorageSVC.token {
+            self.fetchProfile(token)
+            self.switchToTabBarController()
         } else {
             performSegue(withIdentifier: showAuthenticationScreenSegueIdentifier, sender: nil)
         }
@@ -61,6 +64,9 @@ final class SplashViewController: UIViewController {
 extension SplashViewController: AuthViewControllerDelegate {
     func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String) {
         vc.dismiss(animated: true) // Закрыли WebView
+//        guard let token = tokenStorageSVC.token else {
+//            return
+//        }
         
         // Мы проверям наличие токена в сохраненных данных
         UIBlockingProgressHUD.show()
@@ -68,10 +74,30 @@ extension SplashViewController: AuthViewControllerDelegate {
             UIBlockingProgressHUD.dismiss()
             switch result {
             case .success(let token):
-                self.tokenStorage.token = token
+                self.tokenStorageSVC.token = token
+                self.switchToTabBarController()
+                self.fetchProfile(token)
+            case .failure(let error):
+                print("Ошибка считывания токена: \(error)")
+            }
+        }
+    }
+    
+    private func fetchProfile(_ token: String) {
+        UIBlockingProgressHUD.show()
+        profileInfoSVC.fetchProfile(token) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            
+            guard let self = self else { return }
+            
+            switch result {
+            case .success:
+                guard let userName = profileInfoSVC.profile?.userName else {return}
+                self.profileImageSVC.fetchProfileImageURL(username: userName) {_ in}
                 self.switchToTabBarController()
             case .failure(let error):
                 print("Ошибка считывания токена: \(error)")
+                break
             }
         }
     }
