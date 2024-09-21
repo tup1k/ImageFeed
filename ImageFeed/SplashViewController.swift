@@ -9,6 +9,7 @@ import UIKit
 import ProgressHUD
 
 final class SplashViewController: UIViewController {
+    private let splashLogo = UIImageView()
     
     private let showAuthenticationScreenSegueIdentifier = "ShowAuthScreen" // Идентификатор сигвэя между стартовым окном и окном авторизации
     private let service = OAuth2Service.shared // Вызов синглтона
@@ -17,6 +18,18 @@ final class SplashViewController: UIViewController {
 
     private let tokenStorageSVC = OAuth2TokenStorage()
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        addSplashLogo()
+    
+        
+//        let profileViewController = AuthViewController()
+//        profileViewController.delegate = self
+//        profileViewController.modalPresentationStyle = .fullScreen
+//        profileViewController.present(<#T##viewControllerToPresent: UIViewController##UIViewController#>, animated: <#T##Bool#>, completion: <#T##(() -> Void)?##(() -> Void)?##() -> Void#>)
+//        
+        
+    }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -59,6 +72,22 @@ final class SplashViewController: UIViewController {
             .instantiateViewController(withIdentifier: "TabBarViewController")
         window.rootViewController = tabBarController
     }
+    
+    // Метод добавления логотипа кодом
+    private func addSplashLogo() {
+        splashLogo.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(splashLogo)
+        
+        let splashLogoImage = UIImage(named: "launchImage")
+        splashLogo.image = splashLogoImage
+        
+        view.backgroundColor = .ypBlackIOS
+        
+        NSLayoutConstraint.activate([
+            splashLogo.centerXAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerXAnchor),
+            splashLogo.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
+        ])
+    }
 }
 
 extension SplashViewController: AuthViewControllerDelegate {
@@ -85,14 +114,12 @@ extension SplashViewController: AuthViewControllerDelegate {
     
     private func fetchProfile(_ token: String) {
         UIBlockingProgressHUD.show()
-        profileInfoSVC.fetchProfile(token) { [weak self] result in
+        profileInfoSVC.fetchProfile(token) { result in
             UIBlockingProgressHUD.dismiss()
-            
-            guard let self = self else { return }
             
             switch result {
             case .success:
-                guard let userName = profileInfoSVC.profile?.userName else {return}
+                guard let userName = self.profileInfoSVC.profile?.userName else {return}
                 self.profileImageSVC.fetchProfileImageURL(username: userName) {_ in}
                 self.switchToTabBarController()
             case .failure(let error):

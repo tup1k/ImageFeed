@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class ProfileViewController: UIViewController {
     
@@ -19,7 +20,6 @@ final class ProfileViewController: UIViewController {
     private let profileImagePVC = ProfileImageService.shared
     private let tokenStoragePVC = OAuth2TokenStorage()
     private var profileImageServiceObserver: NSObjectProtocol?
-    
     
     
     override init(nibName: String?, bundle: Bundle?) {
@@ -65,9 +65,6 @@ final class ProfileViewController: UIViewController {
         }
     
     
-    
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -80,7 +77,7 @@ final class ProfileViewController: UIViewController {
             view.addSubview($0)
         }
         
-        profileDesignFunc() // Вызов функции создания вью профиля
+        
         nameLabelFunc() // Вызов функции создания лейбла ФИО
         accountNameFunc() // Вызов функции создания лейбла с именем аккаунта
         accountDescriptionFunc() // Вызов функции создания статуса аккаунта
@@ -99,6 +96,7 @@ final class ProfileViewController: UIViewController {
                         self.updateAvatar()                                 // 6
                     }
                 updateAvatar()
+        //profileDesignFunc() // Вызов функции создания вью профиля
     }
     
     private func updateAvatar() {                                   // 8
@@ -106,7 +104,24 @@ final class ProfileViewController: UIViewController {
             let profileImageURL = profileImagePVC.avatarURL,
             let url = URL(string: profileImageURL)
         else { return }
+        
+        let imageURL = URL(string: profileImageURL)
+        profileDesign.kf.setImage(with: imageURL,
+                                  placeholder: UIImage(named: "ProfileImage"))
+        profileDesign.layer.cornerRadius = 20
+        profileDesign.layer.masksToBounds = true
+        
+        profileDesign.tintColor = .gray
+        
+        NSLayoutConstraint.activate([
+            profileDesign.widthAnchor.constraint(equalToConstant: 70),
+            profileDesign.heightAnchor.constraint(equalToConstant: 70),
+            profileDesign.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            profileDesign.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
+        ])
+        
         print(profileImageURL)
+       
         // TODO [Sprint 11] Обновить аватар, используя Kingfisher
     }
     
