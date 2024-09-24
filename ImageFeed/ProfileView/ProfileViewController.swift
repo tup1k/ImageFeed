@@ -10,119 +10,47 @@ import Kingfisher
 
 final class ProfileViewController: UIViewController {
     
-    private let profileDesign = UIImageView()
+    private let profileImage = UIImageView()
     private let nameLabel = UILabel()
     private let accountName = UILabel()
     private let accountDescription = UILabel()
-    private let signOutButton = UIButton()
+    private let logoutButton = UIButton()
     
     private let profileInfoPVC = ProfileService.shared
     private let profileImagePVC = ProfileImageService.shared
     private let tokenStoragePVC = OAuth2TokenStorage()
     private var profileImageServiceObserver: NSObjectProtocol?
     
-    
-    override init(nibName: String?, bundle: Bundle?) {
-        super.init(nibName: nibName, bundle: bundle)
-        addObserver()
-    }
-    
-    required init?(coder: NSCoder) {
-            super.init(coder: coder)
-            addObserver()
-        }
-    
-    deinit {
-            removeObserver()
-        }
-    
-    private func addObserver() {
-           NotificationCenter.default.addObserver(
-               self,
-               selector: #selector(updateAvatar(notification:)),
-               name: ProfileImageService.didChangeNotification,
-               object: nil)
-       }
-    
-    private func removeObserver() {
-            NotificationCenter.default.removeObserver(
-                self,
-                name: ProfileImageService.didChangeNotification,
-                object: nil)
-        }
-    
-    
-    @objc
-        private func updateAvatar(notification: Notification) {
-            guard
-                isViewLoaded,
-                let userInfo = notification.userInfo,
-                let profileImageURL = userInfo["URL"] as? String,
-                let url = URL(string: profileImageURL)
-            else { return }
-            
-            // TODO [Sprint 11] Обновите аватар, используя Kingfisher
-        }
-    
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        [profileDesign,
+        // Создание сабвью и закреплений для всех элементов ProfileViewController
+        [profileImage,
          nameLabel,
          accountName,
          accountDescription,
-         signOutButton].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
+         logoutButton].forEach {
             view.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
         }
         
+        guard let profile = profileInfoPVC.profile else { return }
+        updateProfileDetails(profile: profile) // Загрузка данных профиля из инета
+        nameLabelFunc() // Вызов функции параметров отображения ФИО пользователя
+        accountNameFunc() // Вызов функции параметров отображения имени @пользователя
+        accountDescriptionFunc() // Вызов функции параметров отображения статуса аккаунта
+        logOutButtonFunc() // Вызов функции параметров отображения кнопки выхода из аккаунта
         
-        nameLabelFunc() // Вызов функции создания лейбла ФИО
-        accountNameFunc() // Вызов функции создания лейбла с именем аккаунта
-        accountDescriptionFunc() // Вызов функции создания статуса аккаунта
-        signOutButtonFunc() // Вызов функции создания кнопки выхода из аккаунта
-        
-        updateProfileDetails(profile: profileInfoPVC.profile!)
-        
-  
-        profileImageServiceObserver = NotificationCenter.default    // 2
-                    .addObserver(
-                        forName: ProfileImageService.didChangeNotification, // 3
-                        object: nil,                                        // 4
-                        queue: .main                                        // 5
-                    ) { [weak self] _ in
-                        guard let self = self else { return }
-                        self.updateAvatar()                                 // 6
-                    }
-                updateAvatar()
-        //profileDesignFunc() // Вызов функции создания вью профиля
-    }
-    
-    private func updateAvatar() {                                   // 8
-        guard
-            let profileImageURL = profileImagePVC.avatarURL,
-            let url = URL(string: profileImageURL)
-        else { return }
-        
-        let imageURL = URL(string: profileImageURL)
-        profileDesign.kf.setImage(with: imageURL,
-                                  placeholder: UIImage(named: "ProfileImage"))
-        profileDesign.layer.cornerRadius = 20
-        profileDesign.layer.masksToBounds = true
-        
-        profileDesign.tintColor = .gray
-        
-        NSLayoutConstraint.activate([
-            profileDesign.widthAnchor.constraint(equalToConstant: 70),
-            profileDesign.heightAnchor.constraint(equalToConstant: 70),
-            profileDesign.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            profileDesign.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
-        ])
-        
-        print(profileImageURL)
-       
-        // TODO [Sprint 11] Обновить аватар, используя Kingfisher
+        // Метод слежение и обновления картинки аватара в профиле
+        profileImageServiceObserver = NotificationCenter.default.addObserver(
+            forName: ProfileImageService.didChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self = self else { return }
+            self.updateAvatar()
+        }
+        updateAvatar()
     }
     
     // Метод загрузки данных профиля с сайта
@@ -132,38 +60,47 @@ final class ProfileViewController: UIViewController {
         accountDescription.text = profile.bio
     }
     
-    // Функция создания вью профиля кодом
-    private func profileDesignFunc() {
-//       let profileImage = UIImage(named: "ProfileImage")
-//        profileDesign.image = profileImage
-        profileDesign.tintColor = .gray
+    // Метод загрузки аватара из api unsplash
+    private func updateAvatar() {
+        guard
+            let profileImageURL = profileImagePVC.avatarURL,
+            let imageURL = URL(string: profileImageURL)
+        else { return }
+        
+        let cashe = ImageCache.default
+        cashe.clearMemoryCache()
+        cashe.clearDiskCache()
+        
+        let processor = RoundCornerImageProcessor(cornerRadius: 35)
+        profileImage.kf.indicatorType = .activity
+        profileImage.kf.setImage(with: imageURL, placeholder: UIImage(named: "launchImage"), options: [.processor(processor)])
+        
+        profileImage.tintColor = .gray
         
         NSLayoutConstraint.activate([
-            profileDesign.widthAnchor.constraint(equalToConstant: 70),
-            profileDesign.heightAnchor.constraint(equalToConstant: 70),
-            profileDesign.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
-            profileDesign.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
+            profileImage.widthAnchor.constraint(equalToConstant: 70),
+            profileImage.heightAnchor.constraint(equalToConstant: 70),
+            profileImage.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 16),
+            profileImage.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 32),
         ])
     }
     
-    // Функция создания лейбла с ФИО
+    // Параметры отображения Имя Фамилия пользователя
     private func nameLabelFunc() {
-        //nameLabel.text = "Екатерина Новикова"
         nameLabel.textColor = .ypWhiteIOS
-        nameLabel.font = nameLabel.font.withSize(23)
+        nameLabel.font = UIFont.systemFont(ofSize: 23, weight: .bold)
         
         NSLayoutConstraint.activate([
             nameLabel.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            nameLabel.leadingAnchor.constraint(equalTo: profileDesign.leadingAnchor),
-            nameLabel.topAnchor.constraint(equalTo: profileDesign.bottomAnchor, constant: 8),
+            nameLabel.leadingAnchor.constraint(equalTo: profileImage.leadingAnchor),
+            nameLabel.topAnchor.constraint(equalTo: profileImage.bottomAnchor, constant: 8),
         ])
     }
     
-    // Функция создания лейбла с именем аккаунта
+    // Параметры отображения название @пользователя
     private func accountNameFunc() {
-        //accountName.text = "@ekaterina_nov"
-        accountName.textColor = .gray
-        accountName.font = accountName.font.withSize(13)
+        accountName.textColor = .ypGrayIOS
+        accountName.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         
         NSLayoutConstraint.activate([
             accountName.trailingAnchor.constraint(equalTo: nameLabel.trailingAnchor),
@@ -172,11 +109,10 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    // Функция создания статуса аккаунта
+    // Параметры отображения статуса пользователя
     private func accountDescriptionFunc() {
-        //accountDescription.text = "Hello, World!"
         accountDescription.textColor = .ypWhiteIOS
-        accountDescription.font = accountDescription.font.withSize(13)
+        accountDescription.font = UIFont.systemFont(ofSize: 13, weight: .regular)
         
         NSLayoutConstraint.activate([
             accountDescription.trailingAnchor.constraint(equalTo: accountName.trailingAnchor),
@@ -185,16 +121,16 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    // Функция создания кнопки выхода из аккаунта
-    private func signOutButtonFunc() {
-        let signOutButtonImage = UIImage(named: "LogOutImage")
-        signOutButton.setImage(signOutButtonImage, for: .normal)
+    // Параметры отображения кнопки выхода из аккаунта
+    private func logOutButtonFunc() {
+        let logoutButtonImage = UIImage(named: "LogOutImage")
+        logoutButton.setImage(logoutButtonImage, for: .normal)
         
         NSLayoutConstraint.activate([
-            signOutButton.widthAnchor.constraint(equalToConstant: 44),
-            signOutButton.heightAnchor.constraint(equalToConstant: 44),
-            signOutButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
-            signOutButton.centerYAnchor.constraint(equalTo: profileDesign.centerYAnchor)
+            logoutButton.widthAnchor.constraint(equalToConstant: 44),
+            logoutButton.heightAnchor.constraint(equalToConstant: 44),
+            logoutButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            logoutButton.centerYAnchor.constraint(equalTo: profileImage.centerYAnchor)
         ])
     }
 }

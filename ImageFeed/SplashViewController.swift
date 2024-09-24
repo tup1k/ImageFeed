@@ -9,26 +9,17 @@ import UIKit
 import ProgressHUD
 
 final class SplashViewController: UIViewController {
-    private let splashLogo = UIImageView()
+    private let splashLogo = UIImageView() //Создаем вью картинки SplashViewController
     
     private let showAuthenticationScreenSegueIdentifier = "ShowAuthScreen" // Идентификатор сигвэя между стартовым окном и окном авторизации
-    private let service = OAuth2Service.shared // Вызов синглтона
-    private let profileInfoSVC = ProfileService.shared // Ссылка на класс ProfileService
-    private let profileImageSVC = ProfileImageService.shared // Ссылка на класс ProfileImageService
-
-    private let tokenStorageSVC = OAuth2TokenStorage()
+    private let service = OAuth2Service.shared // Вызов синглтона авторизации
+    private let profileInfoSVC = ProfileService.shared // Вызов синглтона загрузки данных профиля
+    private let profileImageSVC = ProfileImageService.shared // Вызов синглтона загрузки аватарки
+    private let tokenStorageSVC = OAuth2TokenStorage() // Создаем экземпляр хранилища токена
     
     override func viewDidLoad() {
         super.viewDidLoad()
         addSplashLogo()
-    
-        
-//        let profileViewController = AuthViewController()
-//        profileViewController.delegate = self
-//        profileViewController.modalPresentationStyle = .fullScreen
-//        profileViewController.present(<#T##viewControllerToPresent: UIViewController##UIViewController#>, animated: <#T##Bool#>, completion: <#T##(() -> Void)?##(() -> Void)?##() -> Void#>)
-//        
-        
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -36,9 +27,8 @@ final class SplashViewController: UIViewController {
         
         if let token = tokenStorageSVC.token {
             self.fetchProfile(token)
-            self.switchToTabBarController()
         } else {
-            performSegue(withIdentifier: showAuthenticationScreenSegueIdentifier, sender: nil)
+            switchToAuthViewController()
         }
     }
     
@@ -47,19 +37,13 @@ final class SplashViewController: UIViewController {
         setNeedsStatusBarAppearanceUpdate()
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if segue.identifier == showAuthenticationScreenSegueIdentifier {
-            guard
-                let navigationController = segue.destination as? UINavigationController,
-                let viewController = navigationController.viewControllers[0] as? AuthViewController
-            else {
-                assertionFailure("Failed to prepare for \(showAuthenticationScreenSegueIdentifier)")
-                return
-            }
-            viewController.authDelegate = self
-        } else {
-            super.prepare(for: segue, sender: sender)
-        }
+    // Метод перехода в окно авторизации вместо сигвея
+    private func switchToAuthViewController() {
+        guard let authViewController = UIStoryboard(name: "Main", bundle: .main)
+            .instantiateViewController(identifier: "AuthViewController") as? AuthViewController else {return}
+        authViewController.authDelegate = self
+        authViewController.modalPresentationStyle = .fullScreen
+        present(authViewController, animated: true)
     }
     
     // Метод переключения в экран с тап-баром
@@ -93,39 +77,48 @@ final class SplashViewController: UIViewController {
 extension SplashViewController: AuthViewControllerDelegate {
     func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String) {
         vc.dismiss(animated: true) // Закрыли WebView
-//        guard let token = tokenStorageSVC.token else {
-//            return
-//        }
+        UIBlockingProgressHUD.show() // Заблокировали кнопки показом анимации
         
-        // Мы проверям наличие токена в сохраненных данных
-        UIBlockingProgressHUD.show()
-        service.fetchOAuthToken(code) { result in
+        service.fetchOAuthToken(code) { [weak self] result in
             UIBlockingProgressHUD.dismiss()
+            guard let self = self else {return}
             switch result {
             case .success(let token):
-                self.tokenStorageSVC.token = token
-                self.switchToTabBarController()
-                self.fetchProfile(token)
+                tokenStorageSVC.token = token // Записали полученный токен в хранилище
+                fetchProfile(token) // загрузили данные профиля через api
             case .failure(let error):
                 print("Ошибка считывания токена: \(error)")
+                showAlert()
             }
         }
     }
     
     private func fetchProfile(_ token: String) {
         UIBlockingProgressHUD.show()
-        profileInfoSVC.fetchProfile(token) { result in
+        profileInfoSVC.fetchProfile(token) { [weak self] result in
             UIBlockingProgressHUD.dismiss()
-            
+            guard let self = self else {return}
             switch result {
             case .success:
-                guard let userName = self.profileInfoSVC.profile?.userName else {return}
-                self.profileImageSVC.fetchProfileImageURL(username: userName) {_ in}
-                self.switchToTabBarController()
+                guard let userName = profileInfoSVC.profile?.userName else {return}
+                profileImageSVC.fetchProfileImageURL(username: userName) {_ in}
+                switchToTabBarController()
             case .failure(let error):
                 print("Ошибка загрузки данных в SVC: \(error)")
                 break
             }
         }
+    }
+    
+    private func showAlert() {
+        let alert = UIAlertController(title: "Что-то пошло не так(", // заголовок всплывающего окна
+                                      message: "Не удалось войти в систему", // текст во всплывающем окне
+                                      preferredStyle: .alert) // preferredStyle может быть .alert или .actionSheet
+
+        let action = UIAlertAction(title: "OK", style: .default) { _ in
+          print("OK button is clicked!")
+        }
+        alert.addAction(action)
+        present(alert, animated: true)
     }
 }

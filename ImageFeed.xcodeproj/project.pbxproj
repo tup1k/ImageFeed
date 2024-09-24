@@ -121,7 +121,6 @@
 			isa = PBXGroup;
 			children = (
 				8443A5A62C7BBFD800270243 /* AuthViewController.swift */,
-				8443A5A92C7BC39900270243 /* WebViewViewController.swift */,
 				8443A5AC2C81038600270243 /* OAuth2Service.swift */,
 				8443A5B42C863AD400270243 /* OAuth2TokenStorage.swift */,
 			);
@@ -180,6 +179,7 @@
 				84AD16F62C5C143B003B1BB0 /* Main.storyboard */,
 				8443A5C22C95EA1900270243 /* UIBlockingProgressHUD.swift */,
 				8443A5B62C8769EE00270243 /* SplashViewController.swift */,
+				8443A5A92C7BC39900270243 /* WebViewViewController.swift */,
 				84AD16F92C5C143D003B1BB0 /* Assets.xcassets */,
 				84AD16FB2C5C143D003B1BB0 /* LaunchScreen.storyboard */,
 				84AD16FE2C5C143D003B1BB0 /* Info.plist */,

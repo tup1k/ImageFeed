@@ -42,24 +42,16 @@ final class WebViewViewController: UIViewController {
                  guard let self = self else { return }
                  self.updateProgress()
              })
-        
     }
     
-    // поток появления контроллера - добавляем отслеживание
+    // поток появления контроллера
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        webView.addObserver(
-//            self,
-//            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-//            options: .new,
-//            context: nil)
-//        updateProgress()
     }
     
-    // поток исчезновения контроллера - удаляем отслеживание
+    // поток исчезновения контроллера
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-       // webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
     }
     
     // Кнопка возврата из окна авторизации сделаная аутлетом и делегирующая ответственность
@@ -92,20 +84,6 @@ final class WebViewViewController: UIViewController {
         let request = URLRequest(url: url) // Создаем запрос собранной ссылки для авторизации в мое приложение
         webView.load(request) // подгружаем во вебвью наш экран авторизации
     }
-    
-//    // Метод наблюдателя за изменением для прогесс-бара
-//    override func observeValue(
-//        forKeyPath keyPath: String?,
-//        of object: Any?,
-//        change: [NSKeyValueChangeKey : Any]?,
-//        context: UnsafeMutableRawPointer?
-//    ) {
-//        if keyPath == #keyPath(WKWebView.estimatedProgress) {
-//            updateProgress()
-//        } else {
-//            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-//        }
-//    }
     
     // Метод вычисление процентов загрузки прогресс бара
     private func updateProgress() {
@@ -146,7 +124,3 @@ extension WebViewViewController: WKNavigationDelegate {
         }
     }
 }
-
-
-
-

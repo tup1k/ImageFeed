@@ -18,6 +18,7 @@ final class OAuth2Service {
     private var task: URLSessionTask? // Название созданного запроса JSON в fetchOAuthToken
     private var lastCode: String? // Последнее значение code которое было направлено в запросе
     
+    // Синглтон OAuth2Service
     static let shared = OAuth2Service()
     private init () {}
     
@@ -25,12 +26,13 @@ final class OAuth2Service {
     func fetchOAuthToken(_ code: String, completion: @escaping (Result<String, Error>) -> Void) {
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         // Упрощенная версия кода для отслеживания повторного появления code
+        // Если новое значени code совпадает со старым то нет смысла запускать новый запрос
         guard lastCode != code else {
             completion(.failure(AuthServiceError.invalidRequest))
             return
         }
-        task?.cancel()
-        lastCode = code
+        task?.cancel() // Выходим из предыдущей задачи
+        lastCode = code // Обновили значение lastCode
         
         guard let newRequest = makeOAuthTokenRequest(code: code) else {
             completion(.failure(AuthServiceError.invalidRequest))
@@ -38,32 +40,20 @@ final class OAuth2Service {
             return
         }
         
-        let task = urlSession.data(for: newRequest) { result in
+        let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<OAuthTokenResponseBody, Error>)  in
+            guard let self = self else {return}
+            
             switch result {
-            case .success(let data):
-                do {
-                    let decoder = JSONDecoder()
-                    let response = try decoder.decode(OAuthTokenResponseBody.self, from: data)
-                    DispatchQueue.main.async {
-                        completion(.success(response.accessToken))
-                        self.task = nil
-                        self.lastCode = nil
-                    }
-                } catch {
-                    DispatchQueue.main.async {
-                        completion(.failure(error))
-                        print("Ошибка декодирования JSON: \(error)")
-                        self.task = nil
-                        self.lastCode = nil
-                    }
-                }
+            case .success(let response):
+                let myToken = response.accessToken
+                        completion(.success(myToken))
+                self.task = nil
+                self.lastCode = nil
             case .failure(let error):
-                DispatchQueue.main.async {
                     completion(.failure(error))
                     print("Ошибка загрузки JSON: \(error)")
-                    self.task = nil
-                    self.lastCode = nil
-                }
+                self.task = nil
+                self.lastCode = nil
             }
         }
         self.task = task

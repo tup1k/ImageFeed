@@ -8,12 +8,16 @@
 import UIKit
 import Foundation
 
+enum ProfileServiceError: Error {
+    case invalidRequest
+}
+
 // Структура данных пользователя, запрашиваемых в профиль из JSON
-struct ProfileResult: Codable {
+struct ProfileResult: Decodable {
     let userName: String // имя пользователя в системе
     let firstName: String // Настоящее имя пользователя
-    let lastName: String // Настоящая фамилия пользователя
-    let bio: String // Информация о пользователе
+    let lastName: String? // Настоящая фамилия пользователя
+    let bio: String?  // Информация о пользователе
     
     private enum CodingKeys : String, CodingKey {
         case userName = "username"
@@ -27,16 +31,17 @@ struct ProfileResult: Codable {
 struct Profile {
     let userName: String // имя пользователя в системе
     let name: String // Имя и фамилия пользователя
-    let loginName: String // @userName
-    let bio: String // Информация о пользователе
+    let loginName: String? // @userName
+    let bio: String? // Информация о пользователе
 }
 
 final class ProfileService {
     private let urlSession = URLSession.shared // Вводим замену для метода URLSession
     private var task: URLSessionTask? // Название созданного запроса JSON в fetchProfile
     private var lastToken: String? // Последнее значение token которое было направлено в запросе
-    private(set) var profile: Profile?
+    private(set) var profile: Profile? // Хранит данные профиля из api
     
+    // Синглтон ProfileService
     static let shared = ProfileService()
     private init () {}
     
@@ -46,47 +51,36 @@ final class ProfileService {
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         // Упрощенная версия кода для отслеживания повторного появления запроса с token
         guard lastToken != token else {
-            completion(.failure(AuthServiceError.invalidRequest))
+            completion(.failure(ProfileServiceError.invalidRequest))
+            print("Повторный вызов метода загрузки данных профиля.")
             return
         }
         task?.cancel()
         lastToken = token
         
         guard let newRequest = makeProfileRequest(token: token) else {
-            completion(.failure(AuthServiceError.invalidRequest))
+            completion(.failure(ProfileServiceError.invalidRequest))
             print("Не удалось сделать сетевой запрос")
             return
         }
         
-        let task = urlSession.data(for: newRequest) { result in
+        let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<ProfileResult, Error>)  in
+            guard let self = self else {return}
+            
             switch result {
-            case .success(let data):
-                do {
-                    let decoder = JSONDecoder()
-                    let response = try decoder.decode(ProfileResult.self, from: data)
-                    // TODO - проверка если каких-то данных нет
-                    DispatchQueue.main.async {
-                        let profile = Profile(userName: "\(response.userName)", name: "\(response.firstName) \(response.lastName)", loginName: "@\(response.userName)", bio: "\(response.bio)")
-                        self.profile = profile
-                        completion(.success(profile))
-                        self.task = nil
-                        self.lastToken = nil
-                    }
-                } catch {
-                    DispatchQueue.main.async {
-                        completion(.failure(error))
-                        print("Ошибка декодирования JSON: \(error)")
-                        self.task = nil
-                        self.lastToken = nil
-                    }
-                }
+            case .success(let response):
+                let profile = Profile(userName: "\(response.userName)",
+                                      name: "\(response.firstName) " + "\(response.lastName ?? " ")",
+                                      loginName: "@\(response.userName)",
+                                      bio: "\(response.bio ?? " ")")
+                self.profile = profile
+                completion(.success(profile))
+                self.task = nil
             case .failure(let error):
-                DispatchQueue.main.async {
-                    completion(.failure(error))
-                    print("Ошибка загрузки JSON: \(error)")
-                    self.task = nil
-                    self.lastToken = nil
-                }
+                completion(.failure(error))
+                print("Ошибка загрузки JSON: \(error)")
+                self.lastToken = nil
+                self.task = nil
             }
         }
         self.task = task

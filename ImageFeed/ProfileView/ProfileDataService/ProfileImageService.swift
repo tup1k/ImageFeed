@@ -7,7 +7,11 @@
 
 import Foundation
 
-struct UserResult: Codable {
+enum ProfileImageServiceError: Error {
+    case invalidRequest
+}
+
+struct UserResult: Decodable {
     let profileImage: ProfileImageStruct // имя пользователя в системе
     
     private enum CodingKeys : String, CodingKey {
@@ -15,7 +19,7 @@ struct UserResult: Codable {
     }
 }
 
-struct ProfileImageStruct: Codable {
+struct ProfileImageStruct: Decodable {
     let smallProfImage: String
     
     private enum CodingKeys : String, CodingKey {
@@ -33,61 +37,47 @@ final class ProfileImageService {
     
     static let didChangeNotification = Notification.Name(rawValue: "ProfileImageProviderDidChange")
   
+    // Синглтон ProfileImageService
     static let shared = ProfileImageService()
     private init () {}
     
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
-      
+        
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
-        // Упрощенная версия кода для отслеживания повторного появления запроса с username
         guard lastUsername != username else {
-            completion(.failure(AuthServiceError.invalidRequest))
+            completion(.failure(ProfileImageServiceError.invalidRequest))
+            print("Повторный вызов метода загрузки аватара профиля.")
             return
         }
         task?.cancel()
         lastUsername = username
         
-        guard let newRequest = makeProfileImageRequest(token: tokenStoragePVC.token!, username: profileInfo.profile!.userName) else {
-            completion(.failure(AuthServiceError.invalidRequest))
+        guard let token = tokenStoragePVC.token,
+              let username = profileInfo.profile?.userName else { return }
+        
+        guard let newRequest = makeProfileImageRequest(token: token, username: username) else {
+            completion(.failure(ProfileImageServiceError.invalidRequest))
             print("Не удалось сделать сетевой запрос для URL")
             return
         }
-        let task = urlSession.data(for: newRequest) { result in
+        
+        let task = urlSession.objectTask(for: newRequest) { [weak self] (result: Result<UserResult, Error>) in
+            guard let self = self else {return}
             switch result {
-            case .success(let data):
-                do {
-                    let decoder = JSONDecoder()
-                    let response = try decoder.decode(UserResult.self, from: data)
-                    // TODO - проверка если каких-то данных нет
-                    DispatchQueue.main.async {
-                        let smallImage = response.profileImage.smallProfImage
-                        self.avatarURL = smallImage
-                        completion(.success(self.avatarURL!))
-//                        self.task = nil
-//                        self.lastUsername = nil
-                        
-                        NotificationCenter.default
-                            .post(
-                                name: ProfileImageService.didChangeNotification,
-                                object: self,
-                                userInfo: ["URL": self.avatarURL as Any])
-                    }
-                } catch {
-                    DispatchQueue.main.async {
-                        completion(.failure(error))
-                        print("Ошибка декодирования JSON для URL: \(error)")
-//                        self.task = nil
-//                        self.lastUsername = nil
-                    }
-                }
+            case .success(let response):
+                avatarURL = response.profileImage.smallProfImage
+                guard let avatarURL = avatarURL else {return}
+                completion(.success(avatarURL))
+                // Создаем обозреватель за загрузкой аватара из сети
+                NotificationCenter.default.post(name: ProfileImageService.didChangeNotification,
+                                                object: self,
+                                                userInfo: ["URL": self.avatarURL as Any])
+                
             case .failure(let error):
-                DispatchQueue.main.async {
                     completion(.failure(error))
                     print("Ошибка загрузки JSON для URL: \(error)")
-//                    self.task = nil
-//                    self.lastUsername = nil
-                }
             }
+            self.task = nil
         }
         self.task = task
         task.resume()
@@ -107,4 +97,3 @@ final class ProfileImageService {
         return request
     }
     }
-
