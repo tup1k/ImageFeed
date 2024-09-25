@@ -7,6 +7,7 @@
 
 import UIKit
 import Kingfisher
+import SwiftKeychainWrapper
 
 final class ProfileViewController: UIViewController {
     
@@ -51,6 +52,7 @@ final class ProfileViewController: UIViewController {
             self.updateAvatar()
         }
         updateAvatar()
+       // KeychainWrapper.standard.removeObject(forKey: "myAuthToken")
     }
     
     // Метод загрузки данных профиля с сайта
@@ -67,16 +69,19 @@ final class ProfileViewController: UIViewController {
             let imageURL = URL(string: profileImageURL)
         else { return }
         
+        // Очистка кэша
         let cashe = ImageCache.default
         cashe.clearMemoryCache()
         cashe.clearDiskCache()
         
+        // Задание радиуса через кингфишер
         let processor = RoundCornerImageProcessor(cornerRadius: 35)
         profileImage.kf.indicatorType = .activity
         profileImage.kf.setImage(with: imageURL, placeholder: UIImage(named: "launchImage"), options: [.processor(processor)])
         
         profileImage.tintColor = .gray
         
+        // Задание констрейнтов кодом
         NSLayoutConstraint.activate([
             profileImage.widthAnchor.constraint(equalToConstant: 70),
             profileImage.heightAnchor.constraint(equalToConstant: 70),

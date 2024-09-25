@@ -38,17 +38,17 @@ extension URLSession {
                         fulfillCompletionOnTheMainThread(.success(response)) // 3
                     } catch {
                         fulfillCompletionOnTheMainThread(.failure(error))
-                        print("Ошибка декодирования: \(error.localizedDescription), Данные: \(String(data: data, encoding: .utf8) ?? "")")
+                        print("[objectTask]: [dataTask] - Ошибка декодирования: \(error.localizedDescription), Данные: \(String(data: data, encoding: .utf8) ?? "")")
                     }
                 } else {
-                    print("Некорректный статус-код ответа сервера: \(NetworkError.httpStatusCode(statusCode))")
+                    print("[objectTask]: [dataTask] - Некорректный статус-код ответа сервера: \(NetworkError.httpStatusCode(statusCode))")
                     fulfillCompletionOnTheMainThread(.failure(NetworkError.httpStatusCode(statusCode)))
                 }
             } else if let error = error {
-                print("Ошибка запроса: \(NetworkError.urlRequestError(error))")
+                print("[objectTask]: [dataTask] - Ошибка запроса: \(NetworkError.urlRequestError(error))")
                 fulfillCompletionOnTheMainThread(.failure(NetworkError.urlRequestError(error))) // 5
             } else {
-                print("Ошибка сессии: \(NetworkError.urlSessionError)")
+                print("[objectTask]: [dataTask] - Ошибка сессии: \(NetworkError.urlSessionError)")
                 fulfillCompletionOnTheMainThread(.failure(NetworkError.urlSessionError)) // 6
             }
         })

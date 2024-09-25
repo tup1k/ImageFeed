@@ -52,7 +52,7 @@ final class ProfileService {
         // Упрощенная версия кода для отслеживания повторного появления запроса с token
         guard lastToken != token else {
             completion(.failure(ProfileServiceError.invalidRequest))
-            print("Повторный вызов метода загрузки данных профиля.")
+            print("[fetchProfile]: [Состояние гонки] - Повторный вызов метода загрузки данных профиля.")
             return
         }
         task?.cancel()
@@ -60,7 +60,7 @@ final class ProfileService {
         
         guard let newRequest = makeProfileRequest(token: token) else {
             completion(.failure(ProfileServiceError.invalidRequest))
-            print("Не удалось сделать сетевой запрос")
+            print("[fetchProfile]: [makeProfileRequest] - Не удалось сделать сетевой запрос")
             return
         }
         
@@ -78,7 +78,7 @@ final class ProfileService {
                 self.task = nil
             case .failure(let error):
                 completion(.failure(error))
-                print("Ошибка загрузки JSON: \(error)")
+                print("[fetchProfile]: [objectTask] - Ошибка загрузки JSON: \(error)")
                 self.lastToken = nil
                 self.task = nil
             }
@@ -90,7 +90,7 @@ final class ProfileService {
     // Метод сборки ссылки для запроса JSON токена авторизации
     private func makeProfileRequest(token: String) -> URLRequest? {
         guard let url  = URL(string: "https://api.unsplash.com/me/") else {
-            print("Не работает ссылка на профиль")
+            print("[makeProfileRequest]: [URL] Не работает ссылка на профиль")
             assertionFailure("Failed to create URL")
             return nil
         }

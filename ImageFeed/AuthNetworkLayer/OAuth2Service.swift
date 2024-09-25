@@ -29,6 +29,7 @@ final class OAuth2Service {
         // Если новое значени code совпадает со старым то нет смысла запускать новый запрос
         guard lastCode != code else {
             completion(.failure(AuthServiceError.invalidRequest))
+            print("[fetchOAuthToken]: [Состояние гонки] - Повторный запуск запроса")
             return
         }
         task?.cancel() // Выходим из предыдущей задачи
@@ -36,7 +37,7 @@ final class OAuth2Service {
         
         guard let newRequest = makeOAuthTokenRequest(code: code) else {
             completion(.failure(AuthServiceError.invalidRequest))
-            print("Не удалось сделать сетевой запрос")
+            print("[fetchOAuthToken]: [makeOAuthTokenRequest] - Не удалось сделать сетевой запрос")
             return
         }
         
@@ -51,7 +52,7 @@ final class OAuth2Service {
                 self.lastCode = nil
             case .failure(let error):
                     completion(.failure(error))
-                    print("Ошибка загрузки JSON: \(error)")
+                    print("[fetchOAuthToken]: [objectTask] - Ошибка загрузки JSON: \(error)")
                 self.task = nil
                 self.lastCode = nil
             }
@@ -63,7 +64,7 @@ final class OAuth2Service {
     // Метод сборки ссылки для запроса JSON токена авторизации
     private func makeOAuthTokenRequest(code: String) -> URLRequest? {
         guard var baseURL = URLComponents(string: "https://unsplash.com/oauth/token") else {
-            print("Не подгрузилась ссылка на сервис авторизации Unsplash.")
+            print("[makeOAuthTokenRequest]: [URLComponents] - Не подгрузилась ссылка на сервис авторизации Unsplash.")
             fatalError()
         }
         
@@ -78,7 +79,7 @@ final class OAuth2Service {
         
         // создаем ссылку со всеми параметрами API
         guard let url = baseURL.url else {
-            print("Не собралась общая ссылка авторизации с ключами")
+            print("[makeOAuthTokenRequest]: [URL] - Не собралась общая ссылка авторизации с ключами")
             assertionFailure("Failed to create URL")
             return nil
         }

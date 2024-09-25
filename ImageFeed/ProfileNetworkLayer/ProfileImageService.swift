@@ -30,7 +30,7 @@ struct ProfileImageStruct: Decodable {
 final class ProfileImageService {
     private let urlSession = URLSession.shared // Вводим замену для метода URLSession
     private var task: URLSessionTask? // Название созданного запроса JSON в fetchProfile
-    private var lastUsername: String? // Последнее значение token которое было направлено в запросе
+    private var lastUsername: String? // Последнее значение username которое было направлено в запросе
     private(set) var avatarURL: String?
     private var profileInfo = ProfileService.shared
     private let tokenStoragePVC = OAuth2TokenStorage()
@@ -46,7 +46,7 @@ final class ProfileImageService {
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         guard lastUsername != username else {
             completion(.failure(ProfileImageServiceError.invalidRequest))
-            print("Повторный вызов метода загрузки аватара профиля.")
+            print("[fetchProfileImageURL]: [Состояние гонки] - Повторный вызов метода загрузки аватара профиля.")
             return
         }
         task?.cancel()
@@ -57,7 +57,7 @@ final class ProfileImageService {
         
         guard let newRequest = makeProfileImageRequest(token: token, username: username) else {
             completion(.failure(ProfileImageServiceError.invalidRequest))
-            print("Не удалось сделать сетевой запрос для URL")
+            print("[fetchProfileImageURL]: [makeProfileImageRequest] - Не удалось сделать сетевой запрос")
             return
         }
         
@@ -75,7 +75,7 @@ final class ProfileImageService {
                 
             case .failure(let error):
                     completion(.failure(error))
-                    print("Ошибка загрузки JSON для URL: \(error)")
+                    print("[fetchProfileImageURL]: [objectTask] - Ошибка загрузки JSON для URL: \(error)")
             }
             self.task = nil
         }
@@ -87,7 +87,7 @@ final class ProfileImageService {
     private func makeProfileImageRequest(token: String, username: String) -> URLRequest? {
         
         guard let url  = URL(string: "https://api.unsplash.com/users/\(username)") else {
-            print("Не работает ссылка на профиль для URL")
+            print("[makeProfileImageRequest]: [URL] Не работает ссылка на профиль для URL")
             assertionFailure("Failed to create URL")
             return nil
         }

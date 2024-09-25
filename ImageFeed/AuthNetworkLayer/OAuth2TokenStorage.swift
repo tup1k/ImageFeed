@@ -10,13 +10,11 @@ import SwiftKeychainWrapper
 
 // Класс записывает даные токена в память устройства в UserDefaults
 final class OAuth2TokenStorage {
-    //private let userData: UserDefaults = .standard // Вводим замену для упрощения
     
-    // Параметр - токен
+    // Операции с сохранением/выгрузкой токена из кейчейна
     var token: String? {
         get {
             KeychainWrapper.standard.string(forKey: "myAuthToken")
-            //userData.string(forKey: "token")
         }
         
         set {
@@ -25,12 +23,11 @@ final class OAuth2TokenStorage {
                 return
             }
             
-            let isSuccess = KeychainWrapper.standard.set(token, forKey: "myAuthToken")
-            guard isSuccess else {
-                print("Токен не сохранен в keychain")
+            let saveKeychain = KeychainWrapper.standard.set(token, forKey: "myAuthToken")
+            guard saveKeychain else {
+                print("[OAuth2TokenStorage]:[KeychainWrapper] - Не удалось сохранить токен в keychain")
                 return
             }
-            //userData.set(newValue, forKey: "token")
         }
     }
 }

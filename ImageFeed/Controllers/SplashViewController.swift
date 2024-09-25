@@ -25,8 +25,9 @@ final class SplashViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
+        // !!!!! Ключевое место авторизации - если есть токен сразу переходим к считыванию данных API
         if let token = tokenStorageSVC.token {
-            self.fetchProfile(token)
+            self.fetchProfileSVC(token)
         } else {
             switchToAuthViewController()
         }
@@ -49,6 +50,7 @@ final class SplashViewController: UIViewController {
     // Метод переключения в экран с тап-баром
     private func switchToTabBarController() {
         guard let window = UIApplication.shared.windows.first else {
+            print("[switchToTabBarController]: Некорректная конфигурация окна")
             assertionFailure("Invalid window configuration")
             return
         }
@@ -85,15 +87,15 @@ extension SplashViewController: AuthViewControllerDelegate {
             switch result {
             case .success(let token):
                 tokenStorageSVC.token = token // Записали полученный токен в хранилище
-                fetchProfile(token) // загрузили данные профиля через api
+                fetchProfileSVC(token) // загрузили данные профиля через api
             case .failure(let error):
-                print("Ошибка считывания токена: \(error)")
+                print("[authViewController]: [fetchOAuthToken] - Ошибка считывания токена: \(error)")
                 showAlert()
             }
         }
     }
     
-    private func fetchProfile(_ token: String) {
+    private func fetchProfileSVC(_ token: String) {
         UIBlockingProgressHUD.show()
         profileInfoSVC.fetchProfile(token) { [weak self] result in
             UIBlockingProgressHUD.dismiss()
@@ -104,7 +106,7 @@ extension SplashViewController: AuthViewControllerDelegate {
                 profileImageSVC.fetchProfileImageURL(username: userName) {_ in}
                 switchToTabBarController()
             case .failure(let error):
-                print("Ошибка загрузки данных в SVC: \(error)")
+                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
                 break
             }
         }
