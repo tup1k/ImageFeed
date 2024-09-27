@@ -15,7 +15,6 @@ final class AuthViewController: UIViewController {
     private let webViewIdentificator = "ShowWebView" // Идентификатор сигвэя между стартовым окном и окном авторизации
     
     weak var authDelegate: AuthViewControllerDelegate?
-    //private let authService = OAuth2Service.shared
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == webViewIdentificator {
@@ -38,6 +37,4 @@ extension AuthViewController: WebViewViewControllerDelegate {
     func webViewViewControllerDidCancel(_ vc: WebViewViewController) {
         dismiss(animated: true) // Закрыли WebView по нажатию кнопки
     }
-    
-    
 }

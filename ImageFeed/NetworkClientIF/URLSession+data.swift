@@ -15,31 +15,43 @@ enum NetworkError: Error {  // 1
 
 // Добавляем для класса URLSession метод считывания ответа сервера
 extension URLSession {
-    func data(
+    func objectTask<T: Decodable>(
         for request: URLRequest,
-        completion: @escaping (Result<Data, Error>) -> Void
+        completion: @escaping (Result<T, Error>) -> Void
     ) -> URLSessionTask {
-        let fulfillCompletionOnTheMainThread: (Result<Data, Error>) -> Void = { result in  // 2
+        
+        let fulfillCompletionOnTheMainThread: (Result<T, Error>) -> Void = { result in  // 2
             DispatchQueue.main.async {
                 completion(result)
             }
         }
         
-        let task = dataTask(with: request, completionHandler: { data, response, error in
+        let urlSession = URLSession.shared
+        
+        let task = urlSession.dataTask(with: request, completionHandler: { data, response, error in
             if let data = data, let response = response, let statusCode = (response as? HTTPURLResponse)?.statusCode {
                 if 200 ..< 300 ~= statusCode {
-                    fulfillCompletionOnTheMainThread(.success(data)) // 3
-                    print(data)
+                    do {
+                        let decoder = JSONDecoder()
+                        let response = try decoder.decode(T.self, from: data)
+                        
+                        fulfillCompletionOnTheMainThread(.success(response)) // 3
+                    } catch {
+                        fulfillCompletionOnTheMainThread(.failure(error))
+                        print("[objectTask]: [dataTask] - Ошибка декодирования: \(error.localizedDescription), Данные: \(String(data: data, encoding: .utf8) ?? "")")
+                    }
                 } else {
-                    fulfillCompletionOnTheMainThread(.failure(NetworkError.httpStatusCode(statusCode))) // 4
+                    print("[objectTask]: [dataTask] - Некорректный статус-код ответа сервера: \(NetworkError.httpStatusCode(statusCode))")
+                    fulfillCompletionOnTheMainThread(.failure(NetworkError.httpStatusCode(statusCode)))
                 }
             } else if let error = error {
+                print("[objectTask]: [dataTask] - Ошибка запроса: \(NetworkError.urlRequestError(error))")
                 fulfillCompletionOnTheMainThread(.failure(NetworkError.urlRequestError(error))) // 5
             } else {
+                print("[objectTask]: [dataTask] - Ошибка сессии: \(NetworkError.urlSessionError)")
                 fulfillCompletionOnTheMainThread(.failure(NetworkError.urlSessionError)) // 6
             }
         })
-        
         return task
     }
 }

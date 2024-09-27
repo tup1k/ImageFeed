@@ -20,10 +20,12 @@ enum WebViewConstants {
 }
 
 final class WebViewViewController: UIViewController {
-    @IBOutlet private var webView: WKWebView! // Аутлет веб-формы
-    @IBOutlet weak var progressView: UIProgressView! // Аутлет прогресс-бара
+    private var estimatedProgressObservation: NSKeyValueObservation?
     
     weak var delegate: WebViewViewControllerDelegate? // Создаем делегата для контроллера (разобраться)
+    
+    @IBOutlet private var webView: WKWebView! // Аутлет веб-формы
+    @IBOutlet weak var progressView: UIProgressView! // Аутлет прогресс-бара
     
     // поток загрузки контроллера
     override func viewDidLoad() {
@@ -32,23 +34,24 @@ final class WebViewViewController: UIViewController {
         webView.navigationDelegate = self // навигационный делегат между webview и webviewviewcontroller (разобраться)
         loadAuthView() // Загрузка во webView экрана авторизации из сервиса Unsplash
         updateProgress() // Обозреватель за изменением статуса загрузки через прогресс-бар
+        
+        estimatedProgressObservation = webView.observe(
+            \.estimatedProgress,
+             options: [],
+             changeHandler: { [weak self] _, _ in
+                 guard let self = self else { return }
+                 self.updateProgress()
+             })
     }
     
-    // поток появления контроллера - добавляем отслеживание
+    // поток появления контроллера
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        webView.addObserver(
-            self,
-            forKeyPath: #keyPath(WKWebView.estimatedProgress),
-            options: .new,
-            context: nil)
-        updateProgress()
     }
     
-    // поток исчезновения контроллера - удаляем отслеживание
+    // поток исчезновения контроллера
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
     }
     
     // Кнопка возврата из окна авторизации сделаная аутлетом и делегирующая ответственность
@@ -80,20 +83,6 @@ final class WebViewViewController: UIViewController {
         
         let request = URLRequest(url: url) // Создаем запрос собранной ссылки для авторизации в мое приложение
         webView.load(request) // подгружаем во вебвью наш экран авторизации
-    }
-    
-    // Метод наблюдателя за изменением для прогесс-бара
-    override func observeValue(
-        forKeyPath keyPath: String?,
-        of object: Any?,
-        change: [NSKeyValueChangeKey : Any]?,
-        context: UnsafeMutableRawPointer?
-    ) {
-        if keyPath == #keyPath(WKWebView.estimatedProgress) {
-            updateProgress()
-        } else {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-        }
     }
     
     // Метод вычисление процентов загрузки прогресс бара
@@ -135,7 +124,3 @@ extension WebViewViewController: WKNavigationDelegate {
         }
     }
 }
-
-
-
-
