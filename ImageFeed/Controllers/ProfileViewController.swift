@@ -22,6 +22,8 @@ final class ProfileViewController: UIViewController {
     private let tokenStoragePVC = OAuth2TokenStorage()
     private var profileImageServiceObserver: NSObjectProtocol?
     
+    private let imageListStore = ImagesListService.shared
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -52,7 +54,23 @@ final class ProfileViewController: UIViewController {
             self.updateAvatar()
         }
         updateAvatar()
-       // KeychainWrapper.standard.removeObject(forKey: "myAuthToken")
+//       KeychainWrapper.standard.removeObject(forKey: "myAuthToken")
+        
+        let photos = imageListStore.photos
+        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { [weak self] result in
+            guard let self = self else {return}
+            switch result {
+            case .success(let photos):
+                for item in photos {
+                    print(item.largeImageURL)
+                }
+                print(photos.first?.largeImageURL)
+            case .failure(let error):
+                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
+                break
+            }
+        }
+        
     }
     
     // Метод загрузки данных профиля с сайта

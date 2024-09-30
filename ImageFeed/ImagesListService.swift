@@ -11,14 +11,22 @@ enum ImageServiceError: Error {
     case invalidRequest
 }
 
+private var dateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .long
+    formatter.timeStyle = .none
+    //formatter.locale = Locale(identifier: "ru") // Русскоязычная дата
+    return formatter
+}()
+
 struct PhotoResult: Decodable {
     let id: String
-    let createdAt: String
-    let width: String
-    let height: String
-    let description: String
+    let createdAt: String?
+    let width: Int
+    let height: Int
+    let description: String?
+    let isLiked: Bool?
     let urls: UrlsResult
-    
     
     private enum CodingKeys : String, CodingKey {
         case id = "id"
@@ -26,13 +34,14 @@ struct PhotoResult: Decodable {
         case width = "width"
         case height = "height"
         case description = "description"
+        case isLiked = "liked_by_user"
         case urls = "urls"
     }
 }
 
 struct UrlsResult: Decodable {
-    let full: String
-    let thumb: String
+    let full: String?
+    let thumb: String?
     
     private enum CodingKeys : String, CodingKey {
         case full = "full"
@@ -48,6 +57,20 @@ struct Photo {
     let thumbImageURL: String
     let largeImageURL: String
     let isLiked: Bool
+    
+    init(photoResult: PhotoResult) {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .long
+        formatter.timeStyle = .none
+        
+        self.id = photoResult.id
+        self.size = CGSize(width: photoResult.width, height: photoResult.height)
+        self.createdAt = formatter.date(from: photoResult.createdAt ?? "nil")
+        self.welcomeDescription = photoResult.description
+        self.thumbImageURL = photoResult.urls.thumb ?? "nil"
+        self.largeImageURL = photoResult.urls.full ?? "nil"
+        self.isLiked = photoResult.isLiked ?? false
+    }
 }
 
 final class ImagesListService {
@@ -57,13 +80,7 @@ final class ImagesListService {
     private (set) var photos: [Photo] = []
     private var lastLoadedPage: Int? // номер последней скачаной страницы
     
-    private lazy var dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        formatter.timeStyle = .none
-        //formatter.locale = Locale(identifier: "ru") // Русскоязычная дата
-        return formatter
-    }()
+    private var myOwnToken = OAuth2TokenStorage()
     
     static let didChangeNotification = Notification.Name(rawValue: "ImagesListServiceDidChange")
     
@@ -73,7 +90,10 @@ final class ImagesListService {
     
     
     func fetchPhotosNextPage(_ token: String, completion: @escaping (Result<[Photo], Error>) -> Void) {
+        let token = myOwnToken.token
+        
         let nextPage = (lastLoadedPage ?? 0) + 1
+        print(nextPage)
         
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         // Упрощенная версия кода для отслеживания повторного появления запроса с token
@@ -85,25 +105,19 @@ final class ImagesListService {
         task?.cancel()
         lastToken = token
         
-        guard let newRequest = makeImageRequest(token: token, page: nextPage) else {
+        guard let newRequest = makeImageRequest(token: token!, page: nextPage) else {
             completion(.failure(ImageServiceError.invalidRequest))
             print("[fetchPhotosNextPage]: [makeImageRequest] - Не удалось сделать сетевой запрос")
             return
         }
         
-        let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<PhotoResult, Error>)  in
+        let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<[PhotoResult], Error>)  in
             guard let self = self else {return}
             
             switch result {
             case .success(let response):
-                let dateCreation = dateFormatter.date(from: response.createdAt) ?? Date()
-                let photoDescription = response.description ?? " "
-                let photoWidth = Int(response.width) ?? 0
-                let photoHeight = Int(response.height) ?? 0
-                let photoSize = CGSize(width: photoWidth, height: photoHeight)
-            
-                let oneImage = Photo(id: response.id, size: photoSize, createdAt: dateCreation , welcomeDescription: photoDescription, thumbImageURL: response.urls.thumb, largeImageURL: response.urls.full, isLiked: false)
-                photos.append(oneImage)
+                let photosPage = response.map{ Photo(photoResult: $0) }
+                photos.append(contentsOf: photosPage)
                 self.photos = photos
                 completion(.success(photos))
                 self.task = nil
@@ -114,13 +128,14 @@ final class ImagesListService {
                 self.task = nil
             }
         }
-        self.task = task
+       self.task = task
         task.resume()
+        //lastLoadedPage += 1
     }
     
     // Метод сборки ссылки для запроса JSON токена авторизации
     private func makeImageRequest(token: String, page: Int) -> URLRequest? {
-        guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)") else {
+        guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)&&per_page=10") else {
             print("[makeImageRequest]: [URL] Не работает ссылка на профиль")
             assertionFailure("Failed to create URL")
             return nil
