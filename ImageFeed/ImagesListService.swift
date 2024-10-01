@@ -77,6 +77,7 @@ final class ImagesListService {
     private let urlSession = URLSession.shared // Вводим замену для метода URLSession
     private var task: URLSessionTask? // Название созданного запроса JSON в fetchProfile
     private var lastToken: String? // Последнее значение token которое было направлено в запросе
+    private var lastPage: Int? // Последнее значение token которое было направлено в запросе
     private (set) var photos: [Photo] = []
     private var lastLoadedPage: Int? // номер последней скачаной страницы
     
@@ -93,17 +94,16 @@ final class ImagesListService {
         let token = myOwnToken.token
         
         let nextPage = (lastLoadedPage ?? 0) + 1
-        print(nextPage)
         
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         // Упрощенная версия кода для отслеживания повторного появления запроса с token
-        guard lastToken != token else {
-            completion(.failure(ImageServiceError.invalidRequest))
-            print("[fetchPhotosNextPage]: [Состояние гонки] - Повторный вызов метода загрузки данных профиля.")
-            return
-        }
-        task?.cancel()
-        lastToken = token
+//        guard /*lastToken != token &*/ lastPage != nextPage else {
+//            completion(.failure(ImageServiceError.invalidRequest))
+//            print("[fetchPhotosNextPage]: [Состояние гонки] - Повторный вызов метода загрузки данных профиля.")
+//            return
+//        }
+//        task?.cancel()
+//        lastPage = nextPage
         
         guard let newRequest = makeImageRequest(token: token!, page: nextPage) else {
             completion(.failure(ImageServiceError.invalidRequest))
@@ -113,7 +113,6 @@ final class ImagesListService {
         
         let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<[PhotoResult], Error>)  in
             guard let self = self else {return}
-            
             switch result {
             case .success(let response):
                 let photosPage = response.map{ Photo(photoResult: $0) }
@@ -121,16 +120,18 @@ final class ImagesListService {
                 self.photos = photos
                 completion(.success(photos))
                 self.task = nil
+                NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
+                let lastLoadedPage = nextPage
             case .failure(let error):
                 completion(.failure(error))
                 print("[fetchPhotosNextPage]: [objectTask] - Ошибка загрузки JSON: \(error)")
-                self.lastToken = nil
+//                self.lastToken = nil
                 self.task = nil
             }
         }
-       self.task = task
+        self.task = task
         task.resume()
-        //lastLoadedPage += 1
+        
     }
     
     // Метод сборки ссылки для запроса JSON токена авторизации

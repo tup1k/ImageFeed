@@ -78,7 +78,8 @@ final class SplashViewController: UIViewController {
 
 extension SplashViewController: AuthViewControllerDelegate {
     func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String) {
-        vc.dismiss(animated: true) // Закрыли WebView
+        //vc.dismiss(animated: true) // Закрыли WebView
+        vc.presentingViewController?.dismiss(animated: true)
         UIBlockingProgressHUD.show() // Заблокировали кнопки показом анимации
         
         service.fetchOAuthToken(code) { [weak self] result in

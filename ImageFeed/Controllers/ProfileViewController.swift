@@ -57,14 +57,26 @@ final class ProfileViewController: UIViewController {
 //       KeychainWrapper.standard.removeObject(forKey: "myAuthToken")
         
         let photos = imageListStore.photos
-        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { [weak self] result in
-            guard let self = self else {return}
+        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { result in
             switch result {
             case .success(let photos):
                 for item in photos {
                     print(item.largeImageURL)
                 }
-                print(photos.first?.largeImageURL)
+                print(photos.count)
+            case .failure(let error):
+                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
+                break
+            }
+        }
+        
+        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { result in
+            switch result {
+            case .success(let photos):
+                for item in photos {
+                    print(item.largeImageURL)
+                }
+                print(photos.count)
             case .failure(let error):
                 print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
                 break
