@@ -54,14 +54,13 @@ final class ProfileViewController: UIViewController {
             self.updateAvatar()
         }
         updateAvatar()
-//       KeychainWrapper.standard.removeObject(forKey: "myAuthToken")
         
         let photos = imageListStore.photos
         imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { result in
             switch result {
             case .success(let photos):
                 for item in photos {
-                    print(item.largeImageURL)
+                    print(item.createdAt)
                 }
                 print(photos.count)
             case .failure(let error):

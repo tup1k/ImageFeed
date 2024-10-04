@@ -33,4 +33,12 @@ final class ImagesListCell: UITableViewCell {
         
     }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        // Отменяем загрузку, чтобы избежать багов при переиспользовании ячеек
+                //fullsizeImageView.kf.cancelDownloadTask()
+    }
+    
+    
+    
 }

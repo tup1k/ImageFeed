@@ -16,6 +16,7 @@ final class SplashViewController: UIViewController {
     private let profileInfoSVC = ProfileService.shared // Вызов синглтона загрузки данных профиля
     private let profileImageSVC = ProfileImageService.shared // Вызов синглтона загрузки аватарки
     private let tokenStorageSVC = OAuth2TokenStorage() // Создаем экземпляр хранилища токена
+    private var haveToken = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,11 +27,14 @@ final class SplashViewController: UIViewController {
         super.viewDidAppear(animated)
         
         // !!!!! Ключевое место авторизации - если есть токен сразу переходим к считыванию данных API
+        
+        guard !haveToken else { return }
         if let token = tokenStorageSVC.token {
             self.fetchProfileSVC(token)
         } else {
             switchToAuthViewController()
         }
+        haveToken = true
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -58,6 +62,7 @@ final class SplashViewController: UIViewController {
             .instantiateViewController(withIdentifier: "TabBarViewController")
         window.rootViewController = tabBarController
     }
+    
     
     // Метод добавления логотипа кодом
     private func addSplashLogo() {

@@ -19,67 +19,13 @@ private var dateFormatter: DateFormatter = {
     return formatter
 }()
 
-struct PhotoResult: Decodable {
-    let id: String
-    let createdAt: String?
-    let width: Int
-    let height: Int
-    let description: String?
-    let isLiked: Bool?
-    let urls: UrlsResult
-    
-    private enum CodingKeys : String, CodingKey {
-        case id = "id"
-        case createdAt = "created_at"
-        case width = "width"
-        case height = "height"
-        case description = "description"
-        case isLiked = "liked_by_user"
-        case urls = "urls"
-    }
-}
-
-struct UrlsResult: Decodable {
-    let full: String?
-    let thumb: String?
-    
-    private enum CodingKeys : String, CodingKey {
-        case full = "full"
-        case thumb = "thumb"
-    }
-}
-
-struct Photo {
-    let id: String
-    let size: CGSize
-    let createdAt: Date?
-    let welcomeDescription: String?
-    let thumbImageURL: String
-    let largeImageURL: String
-    let isLiked: Bool
-    
-    init(photoResult: PhotoResult) {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .long
-        formatter.timeStyle = .none
-        
-        self.id = photoResult.id
-        self.size = CGSize(width: photoResult.width, height: photoResult.height)
-        self.createdAt = formatter.date(from: photoResult.createdAt ?? "nil")
-        self.welcomeDescription = photoResult.description
-        self.thumbImageURL = photoResult.urls.thumb ?? "nil"
-        self.largeImageURL = photoResult.urls.full ?? "nil"
-        self.isLiked = photoResult.isLiked ?? false
-    }
-}
-
 final class ImagesListService {
     private let urlSession = URLSession.shared // Вводим замену для метода URLSession
     private var task: URLSessionTask? // Название созданного запроса JSON в fetchProfile
     private var lastToken: String? // Последнее значение token которое было направлено в запросе
     private var lastPage: Int? // Последнее значение token которое было направлено в запросе
     private (set) var photos: [Photo] = []
-    private var lastLoadedPage: Int? // номер последней скачаной страницы
+    private var lastLoadedPage: Int? = 0// номер последней скачаной страницы
     
     private var myOwnToken = OAuth2TokenStorage()
     
@@ -91,11 +37,12 @@ final class ImagesListService {
     
     
     func fetchPhotosNextPage(_ token: String, completion: @escaping (Result<[Photo], Error>) -> Void) {
-        let token = myOwnToken.token
+        guard let token = myOwnToken.token else { return }
         
         let nextPage = (lastLoadedPage ?? 0) + 1
         
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
+        //guard let lastPage != nextPage else {return}
         // Упрощенная версия кода для отслеживания повторного появления запроса с token
 //        guard /*lastToken != token &*/ lastPage != nextPage else {
 //            completion(.failure(ImageServiceError.invalidRequest))
@@ -105,28 +52,31 @@ final class ImagesListService {
 //        task?.cancel()
 //        lastPage = nextPage
         
-        guard let newRequest = makeImageRequest(token: token!, page: nextPage) else {
+        
+        guard let newRequest = makeImageRequest(token: token, page: nextPage) else {
             completion(.failure(ImageServiceError.invalidRequest))
             print("[fetchPhotosNextPage]: [makeImageRequest] - Не удалось сделать сетевой запрос")
             return
         }
         
         let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<[PhotoResult], Error>)  in
-            guard let self = self else {return}
+            
             switch result {
             case .success(let response):
+                
+                guard let self = self else {return}
+                
                 let photosPage = response.map{ Photo(photoResult: $0) }
                 photos.append(contentsOf: photosPage)
                 self.photos = photos
                 completion(.success(photos))
                 self.task = nil
                 NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
-                let lastLoadedPage = nextPage
+                self.lastLoadedPage = nextPage
+                print(nextPage)
             case .failure(let error):
                 completion(.failure(error))
                 print("[fetchPhotosNextPage]: [objectTask] - Ошибка загрузки JSON: \(error)")
-//                self.lastToken = nil
-                self.task = nil
             }
         }
         self.task = task
@@ -136,7 +86,7 @@ final class ImagesListService {
     
     // Метод сборки ссылки для запроса JSON токена авторизации
     private func makeImageRequest(token: String, page: Int) -> URLRequest? {
-        guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)&&per_page=10") else {
+        guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)") else {
             print("[makeImageRequest]: [URL] Не работает ссылка на профиль")
             assertionFailure("Failed to create URL")
             return nil
