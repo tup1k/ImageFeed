@@ -23,9 +23,12 @@ final class ProfileViewController: UIViewController {
     private var profileImageServiceObserver: NSObjectProtocol?
     
     private let imageListStore = ImagesListService.shared
+    private let profileLogOut = ProfileLogoutService.shared
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        logoutButton.addTarget(self, action: #selector(tapLogOutButton), for: .touchUpInside)
         
         // Создание сабвью и закреплений для всех элементов ProfileViewController
         [profileImage,
@@ -69,20 +72,22 @@ final class ProfileViewController: UIViewController {
             }
         }
         
-        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { result in
-            switch result {
-            case .success(let photos):
-                for item in photos {
-                    print(item.largeImageURL)
-                }
-                print(photos.count)
-            case .failure(let error):
-                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
-                break
-            }
-        }
+//        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { result in
+//            switch result {
+//            case .success(let photos):
+//                for item in photos {
+//                    print(item.largeImageURL)
+//                }
+//                print(photos.count)
+//            case .failure(let error):
+//                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
+//                break
+//            }
+//        }
         
     }
+    
+
     
     // Метод загрузки данных профиля с сайта
     private func updateProfileDetails(profile: Profile) {
@@ -166,5 +171,23 @@ final class ProfileViewController: UIViewController {
             logoutButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             logoutButton.centerYAnchor.constraint(equalTo: profileImage.centerYAnchor)
         ])
+    }
+    
+    
+    //  Функция выхода из приложения
+    @objc
+    private func tapLogOutButton() {
+        // create the alert
+        let alert = UIAlertController(title: "Внимание!", message: "Вы уверены что хотите выйти?", preferredStyle: UIAlertController.Style.alert)
+        // show the alert
+        alert.addAction(UIAlertAction(title: "Нет", style: .cancel))
+        // add an action (button)
+        alert.addAction(UIAlertAction(title: "Да", style: UIAlertAction.Style.default, handler: { [weak self] _ in
+            guard let self = self else { return }
+            profileLogOut.logout()
+            let splashViewController = SplashViewController()
+            present(splashViewController, animated: true)
+        }))
+        self.present(alert, animated: true, completion: nil)
     }
 }

@@ -24,7 +24,7 @@ final class ImagesListViewController: UIViewController {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
         formatter.timeStyle = .none
-        //formatter.locale = Locale(identifier: "ru") // Русскоязычная дата
+        formatter.locale = Locale(identifier: "ru") // Русскоязычная дата
         return formatter
     }()
     
@@ -34,7 +34,7 @@ final class ImagesListViewController: UIViewController {
         guard let token = tokenStorageILC.token else { return }
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
         
-//        let photos = photosImportService.photos
+        let photos = photosImportService.photos
         photosImportService.fetchPhotosNextPage(token) { result in
             switch result {
             case .success(let photos):
@@ -54,12 +54,13 @@ final class ImagesListViewController: UIViewController {
         let newImage = photosImportService.photos[indexPath.row]
         
         cell.cellImage.kf.setImage(with: URL(string: newImage.largeImageURL)) // Присваиваем его аутлету фотографий
-        cell.dateLabel.text = dateFormatter.string(from: Date()) // Присваиваем дату в нужном формате аутлету даты
-        
+        cell.dateLabel.text = dateFormatter.string(from: newImage.createdAt ?? Date()) // Присваиваем дату в нужном формате аутлету даты
+        print(newImage.createdAt)
         // Присваиваем кнопке картинку нажатого/ненажатого лайк из условия четности фото
         let oddImage = indexPath.row % 2 == 0
 //        let likeImage = oddImage ? UIImage.likeImageNonactive : UIImage.likeImageActive
-        let likeImage = newImage.isLiked ? UIImage.likeImageNonactive : UIImage.likeImageActive
+        let likeImage = newImage.isLiked ? UIImage.likeImageActive : UIImage.likeImageNonactive
+        print(newImage.isLiked)
         cell.likeButton.setImage(likeImage, for: .normal)
         
         // Скругление фото и области градиента
@@ -69,12 +70,15 @@ final class ImagesListViewController: UIViewController {
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showSingleImageSegueIdentifier {
-            let viewController = segue.destination as? SingleImageViewController
-            let indexPath = sender as! IndexPath
-            let newImage = photosImportService.photos[indexPath.row]
-            
-//            let image = UIImage(named: photosName[indexPath.row])
-            //viewController.image.kf.setImage(with: URL(string: newImage.largeImageURL))
+            guard
+                let viewController = segue.destination as? SingleImageViewController,
+                let indexPath = sender as? IndexPath
+            else {
+                assertionFailure("Invalid segue destination")
+                return
+            }
+            let fullImageURL = URL(string: photosImportService.photos[indexPath.row].largeImageURL)
+            viewController.fullImageURL = fullImageURL
         } else {
             super.prepare(for: segue, sender: sender)
         }
@@ -107,14 +111,11 @@ extension ImagesListViewController: UITableViewDelegate {
     
     // Метод отвечающий за подгон размеров картинки в ячейке
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        //let indexPath = sender as! IndexPath
         let newImage = photosImportService.photos[indexPath.row]
-        //guard let newImage = UIImage(named: photosName[indexPath.row]) else { return 0} // Проверяем наличие фото
         let imageDynamicWidth = tableView.bounds.width - 16 - 16
         let scale = imageDynamicWidth/newImage.size.width
-        let imageDinamicHeight = CGFloat(((newImage.height ?? 3000)/10))
+        let imageDinamicHeight = newImage.size.height * scale + 4 + 4
         return imageDinamicHeight
-//        return 300
     }
 }
 
@@ -128,7 +129,7 @@ extension ImagesListViewController: UITableViewDataSource {
     
     // Метод возвращает данные ячейкм
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-    
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: ImagesListCell.reuseIdentifier, for: indexPath) // Определяем номер переиспользуемой ячейки
         
         // Проверяем принадлежит ли полученная ячейка cell к классу  ImagesListCell
@@ -138,7 +139,16 @@ extension ImagesListViewController: UITableViewDataSource {
         
         configCell(for: imagesListCell, with: indexPath) // Выполняет обработку методом configCell для каждой ячейки
         
+//        cell.delegate = self
+        
         return imagesListCell
+    }
+}
+
+extension ImagesListViewController: ImagesListCellDelegate {
+    func imageListCellDidTapLike(_ cell: ImagesListCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        let photo = photosName[indexPath.row]
     }
 }
 

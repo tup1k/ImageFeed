@@ -11,11 +11,14 @@ import UIKit
 final class ImagesListCell: UITableViewCell {
     static let reuseIdentifier = "ImagesListCell" // Создаем идентификатор ячейки
     private let gradientLayer = CAGradientLayer() // Создаем слой градиента
+    private let isLiked: Bool = false // Параметр определяющий наличие лайка у фото
+    weak var delegate: ImagesListCellDelegate?
     
     @IBOutlet weak var cellImage: UIImageView! // Аутлет фото в ячейке
     @IBOutlet weak var likeButton: UIButton! // Аутлет кнопки like
     @IBOutlet weak var gradientView: UIImageView! // Аутлет градиента
     @IBOutlet weak var dateLabel: UILabel! //Аутлет даты создания фото
+    
     
     func setupCellImage() {
         cellImage.layer.cornerRadius = 16 // Сделали скругление всех углов фотки (дублирование сториборда на всякий случай)
@@ -39,6 +42,12 @@ final class ImagesListCell: UITableViewCell {
                 //fullsizeImageView.kf.cancelDownloadTask()
     }
     
+    @IBAction func likeButtonPushed(_ sender: Any) {
+        delegate?.imageListCellDidTapLike(self)
+    }
     
-    
+}
+
+protocol ImagesListCellDelegate: AnyObject {
+    func imageListCellDidTapLike(_ cell: ImagesListCell)
 }

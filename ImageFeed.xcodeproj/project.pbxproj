@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		842F72212CB2E584002BC752 /* ProfileLogoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 842F72202CB2E584002BC752 /* ProfileLogoutService.swift */; };
 		843928F92C9B08B800640076 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 843928F82C9B08B800640076 /* Kingfisher */; };
 		843928FC2C9B701600640076 /* SwiftKeychainWrapper in Frameworks */ = {isa = PBXBuildFile; productRef = 843928FB2C9B701600640076 /* SwiftKeychainWrapper */; };
 		843928FE2C9C4F6A00640076 /* TabBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843928FD2C9C4F6A00640076 /* TabBarController.swift */; };
@@ -49,6 +50,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		842F72202CB2E584002BC752 /* ProfileLogoutService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileLogoutService.swift; sourceTree = "<group>"; };
 		843928FD2C9C4F6A00640076 /* TabBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarController.swift; sourceTree = "<group>"; };
 		843929052CA729E900640076 /* ImagesListService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagesListService.swift; sourceTree = "<group>"; };
 		8439290D2CAB407D00640076 /* ImageFeedTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ImageFeedTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -149,6 +151,7 @@
 		8443A59C2C6011A800270243 /* ImagesList */ = {
 			isa = PBXGroup;
 			children = (
+				843929052CA729E900640076 /* ImagesListService.swift */,
 				84AD16F42C5C143B003B1BB0 /* ImagesListViewController.swift */,
 				8443A59A2C60115300270243 /* ImagesListCell.swift */,
 			);
@@ -237,7 +240,7 @@
 				8443A5A82C7BBFE200270243 /* AuthNetworkLayer */,
 				8443A5A22C6D346E00270243 /* ProfileNetworkLayer */,
 				84AD16F62C5C143B003B1BB0 /* Main.storyboard */,
-				843929052CA729E900640076 /* ImagesListService.swift */,
+				842F72202CB2E584002BC752 /* ProfileLogoutService.swift */,
 				8443A5C22C95EA1900270243 /* UIBlockingProgressHUD.swift */,
 				84AD16F92C5C143D003B1BB0 /* Assets.xcassets */,
 				84AD16FB2C5C143D003B1BB0 /* LaunchScreen.storyboard */,
@@ -371,6 +374,7 @@
 				843929172CAF175200640076 /* PhotoResult.swift in Sources */,
 				8443A5C52C9614EB00270243 /* ProfileService.swift in Sources */,
 				8443A59B2C60115300270243 /* ImagesListCell.swift in Sources */,
+				842F72212CB2E584002BC752 /* ProfileLogoutService.swift in Sources */,
 				843928FE2C9C4F6A00640076 /* TabBarController.swift in Sources */,
 				8443A59E2C640EDB00270243 /* ProfileViewController.swift in Sources */,
 				84AD16F12C5C143B003B1BB0 /* AppDelegate.swift in Sources */,
