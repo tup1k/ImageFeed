@@ -8,7 +8,6 @@
 import Foundation
 import WebKit
 import UIKit
-import SwiftKeychainWrapper
 
 final class ProfileLogoutService {
     private let tokenStoragePLS = OAuth2TokenStorage()
@@ -20,33 +19,6 @@ final class ProfileLogoutService {
     func logout() {
         cleanCookies()
         tokenStoragePLS.toCleanToken()
-        switchToSplashScreen()
-    }
-    
-    func switchToSplashScreen() {
-//        let window = UIWindow(frame: UIScreen.main.bounds)
-//        var navVC = UINavigationController()
-//        var yourVC = SplashViewController()
-//        navVC.viewControllers = [yourVC]
-//       window.rootViewController = navVC
-//        window.makeKeyAndVisible()
-        
-//        // Получаем текущее окно приложения
-//               guard let window = UIApplication.shared.windows.first else {
-//                   print("Не удалось получить главное окно.")
-//                   return
-//               }
-//               
-//               // Создаем экземпляр SplashViewController программно
-//               let splashViewController = SplashViewController()
-//               
-//               // Устанавливаем его как rootViewController с анимацией
-//               window.rootViewController = splashViewController
-//               UIView.transition(with: window,
-//                                 duration: 0.3,
-//                                 options: .transitionCrossDissolve,
-//                                 animations: nil,
-//                                 completion: nil)
     }
     
     private func cleanCookies() {

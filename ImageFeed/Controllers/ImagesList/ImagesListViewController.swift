@@ -14,10 +14,11 @@ final class ImagesListViewController: UIViewController {
     
     @IBOutlet private var tableView: UITableView! // Создаем аутлет таблицы
     
-    private let photosName: [String] = Array(0..<20).map{"\($0)"} //Формируем текстовой массив из преобразованных чисел
-    
+//    private let photosName: [String] = Array(0..<20).map{"\($0)"} //Формируем текстовой массив из преобразованных чисел
+    private var photosName: [Photo] = []
     private let photosImportService = ImagesListService.shared
     private let tokenStorageILC = OAuth2TokenStorage()
+    private let imagesListService = ImagesListService.shared
     
     // Вводим переменную форматирующую дату создания фото
     private lazy var dateFormatter: DateFormatter = {
@@ -31,23 +32,19 @@ final class ImagesListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        guard let token = tokenStorageILC.token else { return }
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
-        
-        let photos = photosImportService.photos
-        photosImportService.fetchPhotosNextPage(token) { result in
+        photosImportService.fetchPhotosNextPage() { result in
             switch result {
             case .success(let photos):
                 self.tableView.reloadData()
-                for item in photos {
-                    print(item.height)
-                }
+                print(self.tokenStorageILC.token)
             case .failure(let error):
                 print("[photosImportService]: [fetchPhotosNextPage] - Ошибка загрузки данных в SVC: \(error)")
                 break
             }
         }
     }
+    
     
     // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
@@ -59,9 +56,10 @@ final class ImagesListViewController: UIViewController {
         // Присваиваем кнопке картинку нажатого/ненажатого лайк из условия четности фото
         let oddImage = indexPath.row % 2 == 0
 //        let likeImage = oddImage ? UIImage.likeImageNonactive : UIImage.likeImageActive
-        let likeImage = newImage.isLiked ? UIImage.likeImageActive : UIImage.likeImageNonactive
-        print(newImage.isLiked)
-        cell.likeButton.setImage(likeImage, for: .normal)
+//        let likeImage = newImage.isLiked ? UIImage.likeImageActive : UIImage.likeImageNonactive
+//        print(newImage.isLiked)
+//        cell.likeButton.setImage(likeImage, for: .normal)
+        cell.pictureIsLiked(isLiked: photosImportService.photos[indexPath.row].isLiked)
         
         // Скругление фото и области градиента
         cell.setupCellImage()
@@ -85,18 +83,18 @@ final class ImagesListViewController: UIViewController {
     }
     
     // Метод загрузки фото в ячейки
-    func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath
-    ) {
+    func tableView(_ tableView: UITableView, 
+                   willDisplay cell: UITableViewCell,
+                   forRowAt indexPath: IndexPath) {
         let photos = photosImportService.photos
         guard indexPath.row + 1 == photos.count else {return}
         
-        photosImportService.fetchPhotosNextPage(tokenStorageILC.token!) { result in
+        photosImportService.fetchPhotosNextPage() { result in
             switch result {
             case .success(let photos):
                 self.tableView.reloadData()
-                print(photos.count)
             case .failure(let error):
-                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
+                print("[photosImportService]: [fetchPhotosNextPage] - Ошибка загрузки данных в SVC: \(error)")
                 break
             }
         }
@@ -139,7 +137,7 @@ extension ImagesListViewController: UITableViewDataSource {
         
         configCell(for: imagesListCell, with: indexPath) // Выполняет обработку методом configCell для каждой ячейки
         
-//        cell.delegate = self
+        imagesListCell.delegate = self
         
         return imagesListCell
     }
@@ -149,6 +147,21 @@ extension ImagesListViewController: ImagesListCellDelegate {
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
         let photo = photosName[indexPath.row]
+        
+        imagesListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) {[weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success:
+                self.photosName = self.imagesListService.photos
+                
+            case .failure(let error):
+                print("error")
+            }
+        }
+    
+        
+        
     }
 }
 

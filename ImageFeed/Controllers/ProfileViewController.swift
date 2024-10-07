@@ -58,32 +58,9 @@ final class ProfileViewController: UIViewController {
         }
         updateAvatar()
         
-        let photos = imageListStore.photos
-        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { result in
-            switch result {
-            case .success(let photos):
-                for item in photos {
-                    print(item.createdAt)
-                }
-                print(photos.count)
-            case .failure(let error):
-                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
-                break
-            }
-        }
+//        let photos = imageListStore.photos
+//        imageListStore.fetchPhotosNextPage()
         
-//        imageListStore.fetchPhotosNextPage(tokenStoragePVC.token!) { result in
-//            switch result {
-//            case .success(let photos):
-//                for item in photos {
-//                    print(item.largeImageURL)
-//                }
-//                print(photos.count)
-//            case .failure(let error):
-//                print("[fetchProfileSVC]: [fetchProfile] - Ошибка загрузки данных в SVC: \(error)")
-//                break
-//            }
-//        }
         
     }
     
@@ -177,17 +154,16 @@ final class ProfileViewController: UIViewController {
     //  Функция выхода из приложения
     @objc
     private func tapLogOutButton() {
-        // create the alert
-        let alert = UIAlertController(title: "Внимание!", message: "Вы уверены что хотите выйти?", preferredStyle: UIAlertController.Style.alert)
-        // show the alert
-        alert.addAction(UIAlertAction(title: "Нет", style: .cancel))
-        // add an action (button)
-        alert.addAction(UIAlertAction(title: "Да", style: UIAlertAction.Style.default, handler: { [weak self] _ in
+        let alert = UIAlertController(title: "Внимание!", message: "Вы уверены что хотите выйти?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Да", style: .default, handler: { [weak self] _ in
             guard let self = self else { return }
             profileLogOut.logout()
-            let splashViewController = SplashViewController()
-            present(splashViewController, animated: true)
+            
+            guard let window = UIApplication.shared.windows.first else { return }
+            window.rootViewController = SplashViewController()
+            window.makeKeyAndVisible()
         }))
-        self.present(alert, animated: true, completion: nil)
+        alert.addAction(UIAlertAction(title: "Нет", style: .default))
+        self.present(alert, animated: true)
     }
 }

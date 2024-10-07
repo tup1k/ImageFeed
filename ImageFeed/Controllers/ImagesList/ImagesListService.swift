@@ -25,8 +25,9 @@ final class ImagesListService {
     private var lastToken: String? // Последнее значение token которое было направлено в запросе
     private var lastPage: Int? // Последнее значение token которое было направлено в запросе
     private (set) var photos: [Photo] = []
-    private var lastLoadedPage: Int? = 0// номер последней скачаной страницы
+    private var lastLoadedPage: Int? // номер последней скачаной страницы
     private var isLiked: Bool = false // Параметр определяющий наличие лайка у фото
+    private let formatter = ISO8601DateFormatter()
     
     private var myOwnToken = OAuth2TokenStorage()
     
@@ -36,10 +37,22 @@ final class ImagesListService {
     static let shared = ImagesListService()
     private init () {}
     
+    // Конвертер структур
+    func convertPhotoStruct(photoResult: [PhotoResult]) {
+        let newPhotoArray = photoResult.map { photo in
+            return Photo(id: photo.id,
+                         size: CGSize(width: photo.width ?? 300, height: photo.height ?? 300),
+                         createdAt: formatter.date(from: photo.createdAt ?? " ") ?? Date(),
+                         welcomeDescription: photo.description,
+                         thumbImageURL: photo.urls.thumb ?? "nil",
+                         largeImageURL: photo.urls.full ?? "nil",
+                         isLiked: photo.isLiked ?? false)
+        }
+        self.photos.append(contentsOf: newPhotoArray)
+    }
     
-    func fetchPhotosNextPage(_ token: String, completion: @escaping (Result<[Photo], Error>) -> Void) {
-        guard let token = myOwnToken.token else { return }
-        
+    // Метод загрузки фото по API
+    func fetchPhotosNextPage(completion: @escaping (Result<[Photo], Error>) -> Void) {
         let nextPage = (lastLoadedPage ?? 0) + 1
         
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
@@ -54,34 +67,26 @@ final class ImagesListService {
         //        lastPage = nextPage
         
         
-        guard let newRequest = makeImageRequest(token: token, page: nextPage) else {
-            completion(.failure(ImageServiceError.invalidRequest))
+        guard let newRequest = makeImageRequest(page: nextPage) else {
             print("[fetchPhotosNextPage]: [makeImageRequest] - Не удалось сделать сетевой запрос")
             return
         }
         
         let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<[PhotoResult], Error>)  in
-            
+            guard let self = self else { return }
             switch result {
             case .success(let response):
                 
-                guard let self = self else {return}
-                
-                let photosPage = response.map{ Photo(photoResult: $0) }
-                photos.append(contentsOf: photosPage)
-                self.photos = photos
-                completion(.success(photos))
-                NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
                 self.lastLoadedPage = nextPage
-                for item in photos {
-                    print(item.createdAt)
-                    print(item.welcomeDescription)
-                }
-                self.task = nil
+                self.convertPhotoStruct(photoResult: response)
+                print(nextPage)
+                NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
+                completion(.success(photos))
             case .failure(let error):
                 completion(.failure(error))
                 print("[fetchPhotosNextPage]: [objectTask] - Ошибка загрузки JSON: \(error)")
             }
+            self.task = nil
         }
         self.task = task
         task.resume()
@@ -89,12 +94,14 @@ final class ImagesListService {
     }
     
     // Метод сборки ссылки для запроса JSON токена авторизации
-    private func makeImageRequest(token: String, page: Int) -> URLRequest? {
+    private func makeImageRequest(page: Int) -> URLRequest? {
         guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)") else {
             print("[makeImageRequest]: [URL] Не работает ссылка на профиль")
             assertionFailure("Failed to create URL")
             return nil
         }
+        
+        guard let token = myOwnToken.token else { return nil}
         
         var request = URLRequest(url: url) // Создаем запрос собранной ссылки для получения json с даным
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -103,37 +110,34 @@ final class ImagesListService {
     
     
     func changeLike(photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
-        guard let token = myOwnToken.token else { return }
-        let likeRequest = isLike ? "POST" : "DELETE"
         
-        guard let url = URL(string: "https://api.unsplash.com/photos/\(photoId)/like") else {
-            print("[changeLike]: [URL] Не работает ссылка на простановку/удаление like")
-            assertionFailure("Failed to create URL")
-            return }
+        assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         
-        
-        var newRequest = URLRequest(url: url) // Создаем запрос собранной ссылки для получения json с даным
-        newRequest.httpMethod = likeRequest
-        newRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        guard let newRequest = makeLikePhotosRequest(photoID: photoId, isLiked: isLike) else {
+            print("[fetchPhotosNextPage]: [makeImageRequest] - Не удалось сделать сетевой запрос")
+            return
+        }
         
         let task = urlSession.objectTask(for: newRequest) {[weak self] (result: Result<[PhotoResult], Error>)  in
+            guard let self = self else {return}
             
             switch result {
             case .success(let response):
-                
-                guard let self = self else {return}
-                
                 if let index = self.photos.firstIndex(where: { $0.id == photoId}) {
                     let photo = self.photos[index]
-                    self.photos[index].isLiked.toggle()
+                    let newPhoto = Photo(id: photo.id,
+                                         size: photo.size,
+                                         createdAt: photo.createdAt,
+                                         welcomeDescription: photo.welcomeDescription,
+                                         thumbImageURL: photo.thumbImageURL,
+                                         largeImageURL: photo.largeImageURL,
+                                         isLiked: !photo.isLiked)
+                    self.photos[index] = newPhoto
+                    completion(.success(()))
+                    NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
                     
-                    
-                    let newPhoto = Photo(photoResult: PhotoResult(id: photo.id, createdAt: photo.createdAt, width: Int(photo.size.width), height: Int(photo.size.height), description: photo.welcomeDescription, isLiked: !photo.isLiked, urls: UrlsResult(full: photo.largeImageURL, thumb: photo.thumbImageURL)))
-                    self.photos = self.photos.withReplaced(item: index, newValue: newPhoto)}
-                completion(.success(photos))
-                NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
-                
-                self.task = nil
+                    self.task = nil
+                }
             case .failure(let error):
                 completion(.failure(error))
                 print("[fetchPhotosNextPage]: [objectTask] - Ошибка загрузки JSON: \(error)")
@@ -141,5 +145,21 @@ final class ImagesListService {
         }
         self.task = task
         task.resume()
+    }
+    
+    // Метод сборки ссылки для запроса JSON токена авторизации
+    private func makeLikePhotosRequest(photoID: String, isLiked: Bool ) -> URLRequest? {
+        guard let url = URL(string: "https://api.unsplash.com/photos/\(photoID)/like") else {
+            print("[makeLikePhotosRequest]: [URL] Не работает ссылка на простановку/удаление like")
+            assertionFailure("Failed to create URL")
+            return nil }
+        
+        guard let token = myOwnToken.token else { return nil}
+        
+        var request = URLRequest(url: url) // Создаем запрос собранной ссылки для получения json с даным
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        let likeRequest = isLiked ? "POST" : "DELETE"
+        request.httpMethod = likeRequest
+        return request
     }
 }
