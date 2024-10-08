@@ -11,16 +11,15 @@ import Kingfisher
 
 final class ImagesListViewController: UIViewController {
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
+    private var imagesListServiceObserver: NSObjectProtocol?
     
     @IBOutlet private var tableView: UITableView! // Создаем аутлет таблицы
     
-//    private let photosName: [String] = Array(0..<20).map{"\($0)"} //Формируем текстовой массив из преобразованных чисел
-    private var photosName: [Photo] = []
-    private let photosImportService = ImagesListService.shared
-    private let tokenStorageILC = OAuth2TokenStorage()
-    private let imagesListService = ImagesListService.shared
+    private var photos: [Photo] = []
+    private let imageListService = ImagesListService.shared
+    private let tokenStorage = OAuth2TokenStorage()
     
-    // Вводим переменную форматирующую дату создания фото
+    // MARK: Форматирование даты по параметры ленты
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
@@ -33,33 +32,54 @@ final class ImagesListViewController: UIViewController {
         super.viewDidLoad()
         
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
-        photosImportService.fetchPhotosNextPage() { result in
+        
+        imagesListServiceObserver = NotificationCenter.default.addObserver(
+            forName: ImagesListService.didChangeNotification,
+            object: nil, queue: .main) {[weak self] _ in
+                guard let self = self else { return }
+                self.updateTableViewAnimated()
+            }
+        
+        imageListService.fetchPhotosNextPage() { result in
             switch result {
             case .success(let photos):
                 self.tableView.reloadData()
-                print(self.tokenStorageILC.token)
             case .failure(let error):
-                print("[photosImportService]: [fetchPhotosNextPage] - Ошибка загрузки данных в SVC: \(error)")
+                print("[ImagesListViewController]: [fetchPhotosNextPage] - Ошибка загрузки данных в SVC: \(error)")
                 break
             }
+        }
+    }
+    
+    func updateTableViewAnimated() {
+        let oldCount = photos.count
+        let newCount = imageListService.photos.count
+        photos = imageListService.photos
+        if oldCount != newCount {
+            tableView.performBatchUpdates {
+                let indexPaths = (oldCount..<newCount).map { i in
+                    IndexPath(row: i, section: 0)
+                }
+                tableView.insertRows(at: indexPaths, with: .automatic)
+            } completion: { _ in }
         }
     }
     
     
     // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        let newImage = photosImportService.photos[indexPath.row]
+        let newImage = imageListService.photos[indexPath.row]
+        let newImageURL = newImage.largeImageURL
+        let newImagePlaceholder = UIImage(named: "stab")
         
-        cell.cellImage.kf.setImage(with: URL(string: newImage.largeImageURL)) // Присваиваем его аутлету фотографий
+        
+        cell.cellImage.kf.indicatorType = .activity
+        cell.cellImage.kf.setImage(with: URL(string: newImageURL),placeholder: newImagePlaceholder) // Присваиваем его аутлету фотографий
         cell.dateLabel.text = dateFormatter.string(from: newImage.createdAt ?? Date()) // Присваиваем дату в нужном формате аутлету даты
-        print(newImage.createdAt)
-        // Присваиваем кнопке картинку нажатого/ненажатого лайк из условия четности фото
-        let oddImage = indexPath.row % 2 == 0
-//        let likeImage = oddImage ? UIImage.likeImageNonactive : UIImage.likeImageActive
-//        let likeImage = newImage.isLiked ? UIImage.likeImageActive : UIImage.likeImageNonactive
-//        print(newImage.isLiked)
-//        cell.likeButton.setImage(likeImage, for: .normal)
-        cell.pictureIsLiked(isLiked: photosImportService.photos[indexPath.row].isLiked)
+        cell.pictureIsLiked(isLiked: newImage.isLiked)
+        
+        cell.delegate = self
+        
         
         // Скругление фото и области градиента
         cell.setupCellImage()
@@ -75,26 +95,25 @@ final class ImagesListViewController: UIViewController {
                 assertionFailure("Invalid segue destination")
                 return
             }
-            let fullImageURL = URL(string: photosImportService.photos[indexPath.row].largeImageURL)
-            viewController.fullImageURL = fullImageURL
+            let largeImageURL = URL(string: imageListService.photos[indexPath.row].largeImageURL)
+            viewController.largeImageURL = largeImageURL
         } else {
             super.prepare(for: segue, sender: sender)
         }
     }
     
-    // Метод загрузки фото в ячейки
-    func tableView(_ tableView: UITableView, 
+    // MARK: - Метод загружающий фото в ячейку
+    func tableView(_ tableView: UITableView,
                    willDisplay cell: UITableViewCell,
                    forRowAt indexPath: IndexPath) {
-        let photos = photosImportService.photos
+        let photos = imageListService.photos
         guard indexPath.row + 1 == photos.count else {return}
-        
-        photosImportService.fetchPhotosNextPage() { result in
+        imageListService.fetchPhotosNextPage() { result in
             switch result {
-            case .success(let photos):
+            case .success:
                 self.tableView.reloadData()
             case .failure(let error):
-                print("[photosImportService]: [fetchPhotosNextPage] - Ошибка загрузки данных в SVC: \(error)")
+                print("[tableView]: [fetchPhotosNextPage] - Ошибка загрузки данных в ячейку: \(error)")
                 break
             }
         }
@@ -109,7 +128,7 @@ extension ImagesListViewController: UITableViewDelegate {
     
     // Метод отвечающий за подгон размеров картинки в ячейке
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        let newImage = photosImportService.photos[indexPath.row]
+        let newImage = imageListService.photos[indexPath.row]
         let imageDynamicWidth = tableView.bounds.width - 16 - 16
         let scale = imageDynamicWidth/newImage.size.width
         let imageDinamicHeight = newImage.size.height * scale + 4 + 4
@@ -122,7 +141,7 @@ extension ImagesListViewController: UITableViewDataSource {
     // Метод определяет количество ячеек в секции таблицы - пока равно числу мок-овских фоток
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         //return photosName.count
-        return photosImportService.photos.count
+        return imageListService.photos.count
     }
     
     // Метод возвращает данные ячейкм
@@ -134,11 +153,8 @@ extension ImagesListViewController: UITableViewDataSource {
         guard let imagesListCell = cell as? ImagesListCell else {
             return UITableViewCell()
         }
-        
-        configCell(for: imagesListCell, with: indexPath) // Выполняет обработку методом configCell для каждой ячейки
-        
         imagesListCell.delegate = self
-        
+        configCell(for: imagesListCell, with: indexPath) // Выполняет обработку методом configCell для каждой ячейки
         return imagesListCell
     }
 }
@@ -146,18 +162,19 @@ extension ImagesListViewController: UITableViewDataSource {
 extension ImagesListViewController: ImagesListCellDelegate {
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
-        let photo = photosName[indexPath.row]
-        
-        imagesListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) {[weak self] result in
+        let photo = imageListService.photos[indexPath.row]
+        UIBlockingProgressHUD.show()
+        imageListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) {[weak self] result in
             guard let self = self else { return }
             
             switch result {
             case .success:
-                self.photosName = self.imagesListService.photos
-                
+                self.photos = self.imageListService.photos
+                cell.pictureIsLiked(isLiked: !photo.isLiked)
             case .failure(let error):
                 print("error")
             }
+            UIBlockingProgressHUD.dismiss()
         }
     
         

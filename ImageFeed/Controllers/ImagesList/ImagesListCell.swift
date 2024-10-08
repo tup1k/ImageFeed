@@ -38,8 +38,7 @@ final class ImagesListCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        // Отменяем загрузку, чтобы избежать багов при переиспользовании ячеек
-                //fullsizeImageView.kf.cancelDownloadTask()
+        cellImage.kf.cancelDownloadTask()
     }
     
     @IBAction func likeButtonPushed(_ sender: Any) {
@@ -48,7 +47,9 @@ final class ImagesListCell: UITableViewCell {
     
     func pictureIsLiked(isLiked: Bool) {
         let likeImage = isLiked ? UIImage.likeImageActive : UIImage.likeImageNonactive
+//        let likeImage = isLiked ? UIImage(named: "likeImageActive") : UIImage(named: "likeImageNonactive")
         likeButton.setImage(likeImage, for: .normal)
+        print("ПРОСТАНОВКА/СНЯТИЕ LIKE - СЕЙЧАС \(isLiked)")
     }
     
 }

@@ -19,7 +19,7 @@ final class SingleImageViewController: UIViewController {
         }
     }
     
-    var fullImageURL: URL?
+    var largeImageURL: URL?
     
     @IBOutlet private var shareButton: UIButton! // Аутлет кнопки шеринга
     @IBOutlet private var imageView: UIImageView! // Аутлет картинки
@@ -33,7 +33,7 @@ final class SingleImageViewController: UIViewController {
         scrollView.minimumZoomScale = 0.1
         scrollView.maximumZoomScale = 1.25
         
-        loadLargeImageFromAPI(imageURL: fullImageURL)
+        loadLargeImageFromAPI(imageURL: largeImageURL)
     }
     
     // Экшн кнопки выхода из просмотра картинки

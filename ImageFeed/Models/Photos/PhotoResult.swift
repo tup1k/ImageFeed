@@ -10,8 +10,8 @@ import Foundation
 struct PhotoResult: Decodable {
     let id: String
     let createdAt: String?
-    let width: Int?
-    let height: Int?
+    let width: Double?
+    let height: Double?
     let description: String?
     let isLiked: Bool?
     let urls: UrlsResult
@@ -35,4 +35,8 @@ struct UrlsResult: Decodable {
         case full = "full"
         case thumb = "thumb"
     }
+}
+
+struct LikeStruct: Decodable {
+    let photo: PhotoResult
 }
