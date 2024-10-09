@@ -7,6 +7,7 @@
 
 import UIKit
 
+
 // Создаем класс кастомной ячейки куда будем закидывать все внутренние аутлеты и слои
 final class ImagesListCell: UITableViewCell {
     static let reuseIdentifier = "ImagesListCell" // Создаем идентификатор ячейки
@@ -33,7 +34,6 @@ final class ImagesListCell: UITableViewCell {
         gradientView.layer.addSublayer(gradientLayer)
         gradientView.layer.cornerRadius = 16 // Делаем скругление радиусов поля градиента (обязательно дополнение про нижние углы)
         gradientView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner] // Тут мы определяем что скругление только по нижним углам
-        
     }
     
     override func prepareForReuse() {
@@ -47,11 +47,9 @@ final class ImagesListCell: UITableViewCell {
     
     func pictureIsLiked(isLiked: Bool) {
         let likeImage = isLiked ? UIImage.likeImageActive : UIImage.likeImageNonactive
-//        let likeImage = isLiked ? UIImage(named: "likeImageActive") : UIImage(named: "likeImageNonactive")
         likeButton.setImage(likeImage, for: .normal)
         print("ПРОСТАНОВКА/СНЯТИЕ LIKE - СЕЙЧАС \(isLiked)")
     }
-    
 }
 
 protocol ImagesListCellDelegate: AnyObject {

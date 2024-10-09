@@ -8,17 +8,18 @@
 import Foundation
 import WebKit
 import UIKit
+import Kingfisher
 
 final class ProfileLogoutService {
-    private let tokenStoragePLS = OAuth2TokenStorage()
+    private let myToken = OAuth2TokenStorage()
     
     static let shared = ProfileLogoutService()
-    
     private init() { }
     
     func logout() {
         cleanCookies()
-        tokenStoragePLS.toCleanToken()
+        myToken.toCleanToken()
+        cleanImageCell()
     }
     
     private func cleanCookies() {
@@ -31,6 +32,14 @@ final class ProfileLogoutService {
                 WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
             }
         }
+    }
+    
+    private func cleanImageCell() {
+        let cache = ImageCache.default
+                cache.clearMemoryCache()
+                cache.clearDiskCache()
+                cache.cleanExpiredMemoryCache()
+                cache.clearCache()
     }
     
     

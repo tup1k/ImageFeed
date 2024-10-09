@@ -17,7 +17,7 @@ final class ImagesListViewController: UIViewController {
     
     private var photos: [Photo] = []
     private let imageListService = ImagesListService.shared
-    private let tokenStorage = OAuth2TokenStorage()
+    private let myToken = OAuth2TokenStorage()
     
     // MARK: Форматирование даты по параметры ленты
     private lazy var dateFormatter: DateFormatter = {
@@ -30,32 +30,27 @@ final class ImagesListViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
         
+        UIBlockingProgressHUD.show()
         imagesListServiceObserver = NotificationCenter.default.addObserver(
             forName: ImagesListService.didChangeNotification,
             object: nil, queue: .main) {[weak self] _ in
                 guard let self = self else { return }
                 self.updateTableViewAnimated()
+                UIBlockingProgressHUD.dismiss()
             }
-        
-        imageListService.fetchPhotosNextPage() { result in
-            switch result {
-            case .success(let photos):
-                self.tableView.reloadData()
-            case .failure(let error):
-                print("[ImagesListViewController]: [fetchPhotosNextPage] - Ошибка загрузки данных в SVC: \(error)")
-                break
-            }
-        }
+        imageListService.fetchPhotosNextPage()
+        print("ТЕПЕРЬ ТВОЙ TOKEN РАВЕН - \(myToken.token ?? "НЕ ИДЕНТИФИЦИИРУЕТСЯ")")
     }
     
-    func updateTableViewAnimated() {
+    // MARK: Обновление таблицы
+    private func updateTableViewAnimated() {
         let oldCount = photos.count
         let newCount = imageListService.photos.count
         photos = imageListService.photos
         if oldCount != newCount {
+            //            tableView.reloadData()
             tableView.performBatchUpdates {
                 let indexPaths = (oldCount..<newCount).map { i in
                     IndexPath(row: i, section: 0)
@@ -65,21 +60,22 @@ final class ImagesListViewController: UIViewController {
         }
     }
     
-    
     // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         let newImage = imageListService.photos[indexPath.row]
-        let newImageURL = newImage.largeImageURL
+        let newImageURL = newImage.thumbImageURL
         let newImagePlaceholder = UIImage(named: "stab")
         
         
         cell.cellImage.kf.indicatorType = .activity
-        cell.cellImage.kf.setImage(with: URL(string: newImageURL),placeholder: newImagePlaceholder) // Присваиваем его аутлету фотографий
+        cell.cellImage.kf.setImage(with: URL(string: newImageURL),placeholder: newImagePlaceholder) { [weak self] _ in
+            guard let self = self else {return}
+            self.tableView.reloadRows(at: [indexPath], with: .automatic)
+        }
         cell.dateLabel.text = dateFormatter.string(from: newImage.createdAt ?? Date()) // Присваиваем дату в нужном формате аутлету даты
         cell.pictureIsLiked(isLiked: newImage.isLiked)
         
         cell.delegate = self
-        
         
         // Скругление фото и области градиента
         cell.setupCellImage()
@@ -108,15 +104,7 @@ final class ImagesListViewController: UIViewController {
                    forRowAt indexPath: IndexPath) {
         let photos = imageListService.photos
         guard indexPath.row + 1 == photos.count else {return}
-        imageListService.fetchPhotosNextPage() { result in
-            switch result {
-            case .success:
-                self.tableView.reloadData()
-            case .failure(let error):
-                print("[tableView]: [fetchPhotosNextPage] - Ошибка загрузки данных в ячейку: \(error)")
-                break
-            }
-        }
+        imageListService.fetchPhotosNextPage() 
     }
 }
 
@@ -140,7 +128,6 @@ extension ImagesListViewController: UITableViewDataSource {
     
     // Метод определяет количество ячеек в секции таблицы - пока равно числу мок-овских фоток
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        //return photosName.count
         return imageListService.photos.count
     }
     
@@ -166,19 +153,23 @@ extension ImagesListViewController: ImagesListCellDelegate {
         UIBlockingProgressHUD.show()
         imageListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) {[weak self] result in
             guard let self = self else { return }
-            
             switch result {
             case .success:
                 self.photos = self.imageListService.photos
                 cell.pictureIsLiked(isLiked: !photo.isLiked)
-            case .failure(let error):
-                print("error")
+                UIBlockingProgressHUD.dismiss()
+            case .failure:
+                UIBlockingProgressHUD.dismiss()
+                likeAlert()
             }
-            UIBlockingProgressHUD.dismiss()
         }
+    }
     
-        
-        
+    private func likeAlert() {
+        let alert = UIAlertController(title: "Внимание!", message: "Функция недоступна, попробуйте позже", preferredStyle: .alert)
+        let okButtonAction = UIAlertAction(title: "OK", style: .cancel)
+        alert.addAction(okButtonAction)
+        self.present(alert, animated: true)
     }
 }
 

@@ -43,9 +43,7 @@ final class SingleImageViewController: UIViewController {
     
     // Экшн кнопки шеринга картинки
     @IBAction func tapShareButton(_ sender: Any) {
-//        guard let image else { return }
         guard let fullImage = imageView.image else { return }
-//        didTapShareButton(image: image)
         didTapShareButton(image: fullImage)
     }
     
@@ -87,10 +85,21 @@ final class SingleImageViewController: UIViewController {
                 self.imageView.frame.size = imageResult.image.size
                 self.rescaleAndCenterImageInScrollView(image: imageResult.image)
             case .failure:
-//                self.showError()
-                print("error")
+                self.showErrorAlert()
             }
         }
+    }
+    
+    private func showErrorAlert() {
+        let alert = UIAlertController(title: "Не удалось загрузить фото.", message: "Попробовать еще раз?", preferredStyle: .alert)
+        let noButtonAction = UIAlertAction(title: "Нет", style: .cancel)
+        let yesButtonAction = UIAlertAction(title: "Да", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            self.loadLargeImageFromAPI(imageURL: largeImageURL)
+        }
+        alert.addAction(noButtonAction)
+        alert.addAction(yesButtonAction)
+        self.present(alert, animated: true)
     }
 }
 

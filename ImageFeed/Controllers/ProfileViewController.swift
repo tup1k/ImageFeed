@@ -19,7 +19,7 @@ final class ProfileViewController: UIViewController {
     
     private let profileInfoPVC = ProfileService.shared
     private let profileImagePVC = ProfileImageService.shared
-    private let tokenStoragePVC = OAuth2TokenStorage()
+    private let myToken = OAuth2TokenStorage()
     private var profileImageServiceObserver: NSObjectProtocol?
     
     private let imageListStore = ImagesListService.shared
@@ -27,21 +27,7 @@ final class ProfileViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        logoutButton.addTarget(self, action: #selector(tapLogOutButton), for: .touchUpInside)
-        
-        // Создание сабвью и закреплений для всех элементов ProfileViewController
-        [profileImage,
-         nameLabel,
-         accountName,
-         accountDescription,
-         logoutButton].forEach {
-            view.addSubview($0)
-            $0.translatesAutoresizingMaskIntoConstraints = false
-        }
-        
-        guard let profile = profileInfoPVC.profile else { return }
-        updateProfileDetails(profile: profile) // Загрузка данных профиля из инета
+        createSubview()
         nameLabelFunc() // Вызов функции параметров отображения ФИО пользователя
         accountNameFunc() // Вызов функции параметров отображения имени @пользователя
         accountDescriptionFunc() // Вызов функции параметров отображения статуса аккаунта
@@ -57,17 +43,24 @@ final class ProfileViewController: UIViewController {
             self.updateAvatar()
         }
         updateAvatar()
-        
-//        let photos = imageListStore.photos
-//        imageListStore.fetchPhotosNextPage()
-        
-        
+        updateProfileDetails(profile: profileInfoPVC.profile) // Загрузка данных профиля из инета
     }
     
-
+    // Создание сабвью и закреплений для всех элементов ProfileViewController
+    func createSubview() {
+        [profileImage,
+         nameLabel,
+         accountName,
+         accountDescription,
+         logoutButton].forEach {
+            view.addSubview($0)
+            $0.translatesAutoresizingMaskIntoConstraints = false
+        }
+    }
     
     // Метод загрузки данных профиля с сайта
-    private func updateProfileDetails(profile: Profile) {
+    private func updateProfileDetails(profile: Profile?) {
+        guard let profile = profileInfoPVC.profile else { return }
         nameLabel.text = profile.name
         accountName.text = profile.loginName
         accountDescription.text = profile.bio
@@ -78,7 +71,9 @@ final class ProfileViewController: UIViewController {
         guard
             let profileImageURL = profileImagePVC.avatarURL,
             let imageURL = URL(string: profileImageURL)
-        else { return }
+        else {
+            print("НЕ ПОДГРУЗИЛАСЬ ССЫЛКА НА АВАТАР")
+            return }
         
         // Очистка кэша
         let cashe = ImageCache.default
@@ -141,6 +136,7 @@ final class ProfileViewController: UIViewController {
     private func logOutButtonFunc() {
         let logoutButtonImage = UIImage(named: "LogOutImage")
         logoutButton.setImage(logoutButtonImage, for: .normal)
+        logoutButton.addTarget(self, action: #selector(tapLogOutButton), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
             logoutButton.widthAnchor.constraint(equalToConstant: 44),
@@ -155,15 +151,28 @@ final class ProfileViewController: UIViewController {
     @objc
     private func tapLogOutButton() {
         let alert = UIAlertController(title: "Внимание!", message: "Вы уверены что хотите выйти?", preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Да", style: .default, handler: { [weak self] _ in
+        let yesButtonAction = UIAlertAction(title: "Да", style: .default, handler: { [weak self] _ in
             guard let self = self else { return }
             profileLogOut.logout()
-            
-            guard let window = UIApplication.shared.windows.first else { return }
-            window.rootViewController = SplashViewController()
-            window.makeKeyAndVisible()
-        }))
-        alert.addAction(UIAlertAction(title: "Нет", style: .default))
+            profileExitTransit()
+            print("ВЫ ВЫШЛИ ИЗ ПРОФИЛЯ. ТОКЕН - \(myToken.token ?? "НЕ ИДЕНТИФИЦИИРУЕТСЯ")")
+        })
+        let noButtonAction = UIAlertAction(title: "Нет", style: .cancel)
+        alert.addAction(yesButtonAction)
+        alert.addAction(noButtonAction)
         self.present(alert, animated: true)
     }
+
+    private func profileExitTransit() {
+        guard let window = UIApplication.shared.windows.first else { return }
+        let finalVC = SplashViewController()
+        window.rootViewController = finalVC
+        window.makeKeyAndVisible()
+        UIView.transition(with: window,
+                          duration: 0.3,
+                          options: .transitionCrossDissolve,
+                          animations: nil,
+                          completion: nil)
+    }
 }
+

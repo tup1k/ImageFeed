@@ -27,7 +27,6 @@ final class SplashViewController: UIViewController {
         super.viewDidAppear(animated)
         
         // !!!!! Ключевое место авторизации - если есть токен сразу переходим к считыванию данных API
-        
         guard !haveToken else { return }
         if let token = tokenStorageSVC.token {
             self.fetchProfileSVC(token)

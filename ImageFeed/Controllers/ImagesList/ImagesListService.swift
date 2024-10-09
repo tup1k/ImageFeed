@@ -11,14 +11,6 @@ enum ImageServiceError: Error {
     case invalidRequest
 }
 
-private var dateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .long
-    formatter.timeStyle = .none
-    //formatter.locale = Locale(identifier: "ru") // Русскоязычная дата
-    return formatter
-}()
-
 final class ImagesListService {
     private let urlSession = URLSession.shared // Вводим замену для метода URLSession
     private var task: URLSessionTask? // Название созданного запроса JSON в fetchProfile
@@ -47,10 +39,11 @@ final class ImagesListService {
                          isLiked: photo.isLiked ?? false)
         }
         self.photos.append(contentsOf: newPhotoArray)
+        NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: self)
     }
     
-    // Метод загрузки фото по API
-    func fetchPhotosNextPage(completion: @escaping (Result<[Photo], Error>) -> Void) {
+    // MARK: Сетевой слой загрузки фото по API
+    func fetchPhotosNextPage() {
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         
         let nextPage = (lastLoadedPage ?? 0) + 1
@@ -77,10 +70,8 @@ final class ImagesListService {
                 self.convertPhotoStruct(photoResult: response)
                 print(nextPage)
                 NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
-                completion(.success(photos))
                 print("ЗАГРУЗИЛИ ФОТО ДЛЯ СТРАНИЦЫ: \(lastLoadedPage ?? 0)")
             case .failure(let error):
-                completion(.failure(error))
                 print("[fetchPhotosNextPage]: [objectTask] - Ошибка загрузки JSON: \(error)")
             }
             self.task = nil
@@ -92,7 +83,7 @@ final class ImagesListService {
     
     // Метод сборки ссылки для запроса JSON токена авторизации
     private func makeImageDataRequest(page: Int) -> URLRequest? {
-        guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)") else {
+        guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)&per_page=10") else {
             print("[makeImageDataRequest]: [URL] Не работает ссылка на загрузку фото")
             assertionFailure("Failed to create URL")
             return nil
