@@ -32,7 +32,7 @@ final class ImagesListService {
         let newPhotoArray = photoResult.map { photo in
             return Photo(id: photo.id,
                          size: CGSize(width: photo.width ?? 300, height: photo.height ?? 300),
-                         createdAt: formatter.date(from: photo.createdAt ?? " ") ?? Date(),
+                         createdAt: formatter.date(from: photo.createdAt ?? " "),
                          welcomeDescription: photo.description,
                          thumbImageURL: photo.urls.thumb ?? "nil",
                          largeImageURL: photo.urls.full ?? "nil",
@@ -49,12 +49,13 @@ final class ImagesListService {
         let nextPage = (lastLoadedPage ?? 0) + 1
         print("ПРОВЕРКА ИЗМЕНЕНИЯ СТРАНИЦ - loaded page: \(nextPage)")
         
-        guard task == nil else { 
-            print("ЗАГРУЗКА ФОТО УЖЕ ВЫПОЛНЯЕТСЯ")
-            return }
+        if task != nil {
+            print("[fetchPhotosNextPage] - ЗАГРУЗКА ФОТО УЖЕ ВЫПОЛНЯЕТСЯ")
+            return
+        }
         
         guard nextPage != lastLoadedPage else {
-            print("ЭТА СТРАНИЦА УЖЕ ЗАГРУЖЕНА. СТРАНИЦА: \(nextPage)")
+            print("[fetchPhotosNextPage] - ЭТА СТРАНИЦА УЖЕ ЗАГРУЖЕНА. СТРАНИЦА: \(nextPage)")
             return }
         
         guard let newRequest = makeImageDataRequest(page: nextPage) else {
@@ -68,8 +69,7 @@ final class ImagesListService {
             case .success(let response):
                 self.lastLoadedPage = nextPage
                 self.convertPhotoStruct(photoResult: response)
-                print(nextPage)
-                NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
+                NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: self, userInfo: ["photos": self.photos])
                 print("ЗАГРУЗИЛИ ФОТО ДЛЯ СТРАНИЦЫ: \(lastLoadedPage ?? 0)")
             case .failure(let error):
                 print("[fetchPhotosNextPage]: [objectTask] - Ошибка загрузки JSON: \(error)")
@@ -78,7 +78,6 @@ final class ImagesListService {
         }
         self.task = task
         task.resume()
-        
     }
     
     // Метод сборки ссылки для запроса JSON токена авторизации
@@ -90,7 +89,7 @@ final class ImagesListService {
         }
         
         guard let token = tokenStorage.token else { 
-            print("НЕ ЗАГРУЖЕН ТОКЕН ПОЛЬЗОВАТЕЛЯ")
+            print("[makeImageDataRequest] - НЕ ЗАГРУЖЕН ТОКЕН ПОЛЬЗОВАТЕЛЯ")
             return nil}
         
         var request = URLRequest(url: url) // Создаем запрос собранной ссылки для получения json с даным
@@ -98,10 +97,9 @@ final class ImagesListService {
         return request
     }
     
-    
+    // Метод сборки ссылки для установки/удаления like
     func changeLike(photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
-        
         
         guard let newRequest = makeLikePhotosRequest(photoID: photoId, isLiked: isLike) else {
             print("[changeLike]: [makeLikePhotosRequest] - Не удалось сделать сетевой запрос для установки like")
@@ -127,7 +125,7 @@ final class ImagesListService {
                     self.photos[index] = newPhoto
                     
                     NotificationCenter.default.post(name: ImagesListService.didChangeNotification, object: nil)
-                    print("ЗНАЧЕНИЕ LIKE БЫЛО ИЗМЕНЕНО")
+                    print("[changeLike]: [objectTask] - ЗНАЧЕНИЕ LIKE БЫЛО ИЗМЕНЕНО")
                 }
                 completion(.success(()))
                 
@@ -135,6 +133,7 @@ final class ImagesListService {
                 completion(.failure(error))
                 print("[changeLike]: [objectTask] - Ошибка загрузки JSON: \(error)")
             }
+            self.task = nil
         }
         self.task = task
         task.resume()
@@ -143,12 +142,12 @@ final class ImagesListService {
     // Метод сборки ссылки для запроса JSON токена авторизации
     private func makeLikePhotosRequest(photoID: String, isLiked: Bool ) -> URLRequest? {
         guard let url = URL(string: "https://api.unsplash.com/photos/\(photoID)/like") else {
-            print("[makeLikePhotosRequest]: [URL] Не работает ссылка на простановку/удаление like")
+            print("[makeLikePhotosRequest]: [URL] - Не работает ссылка на простановку/удаление like")
             assertionFailure("Failed to create URL")
             return nil }
         
         guard let token = tokenStorage.token else { 
-            print("НЕ ЗАГРУЖЕН ТОКЕН ПОЛЬЗОВАТЕЛЯ")
+            print("[makeLikePhotosRequest] - НЕ ЗАГРУЖЕН ТОКЕН ПОЛЬЗОВАТЕЛЯ")
             return nil}
         
         var request = URLRequest(url: url) // Создаем запрос собранной ссылки для получения json с даным

@@ -15,7 +15,7 @@ final class ImagesListViewController: UIViewController {
     
     @IBOutlet private var tableView: UITableView! // Создаем аутлет таблицы
     
-    private var photos: [Photo] = []
+    private var photoList: [Photo] = []
     private let imageListService = ImagesListService.shared
     private let myToken = OAuth2TokenStorage()
     
@@ -45,15 +45,15 @@ final class ImagesListViewController: UIViewController {
     }
     
     // MARK: Обновление таблицы
-    private func updateTableViewAnimated() {
-        let oldCount = photos.count
+    func updateTableViewAnimated() {
+        let oldCount = photoList.count
         let newCount = imageListService.photos.count
-        photos = imageListService.photos
+        photoList = imageListService.photos
         if oldCount != newCount {
-            //            tableView.reloadData()
             tableView.performBatchUpdates {
-                let indexPaths = (oldCount..<newCount).map { i in
-                    IndexPath(row: i, section: 0)
+                var indexPaths: [IndexPath] = []
+                for i in oldCount..<newCount {
+                    indexPaths.append(IndexPath(row: i, section: 0))
                 }
                 tableView.insertRows(at: indexPaths, with: .automatic)
             } completion: { _ in }
@@ -62,20 +62,24 @@ final class ImagesListViewController: UIViewController {
     
     // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
-        let newImage = imageListService.photos[indexPath.row]
+        let newImage = photoList[indexPath.row]
         let newImageURL = newImage.thumbImageURL
+        guard let url = URL(string: newImageURL) else { return }
         let newImagePlaceholder = UIImage(named: "stab")
         
-        
         cell.cellImage.kf.indicatorType = .activity
-        cell.cellImage.kf.setImage(with: URL(string: newImageURL),placeholder: newImagePlaceholder) { [weak self] _ in
+        cell.cellImage.kf.setImage(with: url,placeholder: newImagePlaceholder) { [weak self] _ in
             guard let self = self else {return}
             self.tableView.reloadRows(at: [indexPath], with: .automatic)
         }
-        cell.dateLabel.text = dateFormatter.string(from: newImage.createdAt ?? Date()) // Присваиваем дату в нужном формате аутлету даты
-        cell.pictureIsLiked(isLiked: newImage.isLiked)
         
-        cell.delegate = self
+        if let newImageCreationDate = newImage.createdAt {
+            cell.dateLabel.text = dateFormatter.string(from: newImageCreationDate) // Присваиваем дату в нужном формате аутлету даты
+        } else {
+            cell.dateLabel.text = "" // Если даты нет ставим пустую строку
+        }
+        
+        cell.pictureIsLiked(isLiked: newImage.isLiked)
         
         // Скругление фото и области градиента
         cell.setupCellImage()
@@ -109,7 +113,7 @@ final class ImagesListViewController: UIViewController {
 }
 
 extension ImagesListViewController: UITableViewDelegate {
-    // Метод, отвечающий за действия при нажатии на фото
+    // Метод, отвечающий за действия при нажатии на фото - выводит большое фото
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
@@ -128,7 +132,7 @@ extension ImagesListViewController: UITableViewDataSource {
     
     // Метод определяет количество ячеек в секции таблицы - пока равно числу мок-овских фоток
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return imageListService.photos.count
+        return photoList.count
     }
     
     // Метод возвращает данные ячейкм
@@ -149,13 +153,14 @@ extension ImagesListViewController: UITableViewDataSource {
 extension ImagesListViewController: ImagesListCellDelegate {
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
-        let photo = imageListService.photos[indexPath.row]
+        
+        let photo = photoList[indexPath.row]
         UIBlockingProgressHUD.show()
         imageListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) {[weak self] result in
             guard let self = self else { return }
             switch result {
             case .success:
-                self.photos = self.imageListService.photos
+                self.photoList = self.imageListService.photos
                 cell.pictureIsLiked(isLiked: !photo.isLiked)
                 UIBlockingProgressHUD.dismiss()
             case .failure:
