@@ -27,8 +27,9 @@ final class ImagesListService {
     static let shared = ImagesListService()
     private init () {}
     
-    // MARK: Конвертер структур с обновлением массива
-    func convertPhotoStruct(photoResult: [PhotoResult]) {
+    /// Конвертер структур с обновлением массива
+    /// - Параметры: Конвертирует из [PhotoResult] в [Photo]
+    private func convertPhotoStruct(photoResult: [PhotoResult]) {
         let newPhotoArray = photoResult.map { photo in
             return Photo(id: photo.id,
                          size: CGSize(width: photo.width ?? 300, height: photo.height ?? 300),
@@ -80,7 +81,8 @@ final class ImagesListService {
         task.resume()
     }
     
-    // Метод сборки ссылки для запроса JSON токена авторизации
+    /// Метод сборки ссылки для запроса JSON токена авторизации
+    /// - Параметры: page - номер загружаемой страницы с фото (из расчета 10 фото на странице)
     private func makeImageDataRequest(page: Int) -> URLRequest? {
         guard let url  = URL(string: "https://api.unsplash.com/photos?page=\(page)&per_page=10") else {
             print("[makeImageDataRequest]: [URL] Не работает ссылка на загрузку фото")
@@ -97,7 +99,8 @@ final class ImagesListService {
         return request
     }
     
-    // Метод сборки ссылки для установки/удаления like
+    /// Метод сборки ссылки для установки/удаления like
+    /// - Параметры: photoID - номер фото; isLiked - поставлен/снят like
     func changeLike(photoId: String, isLike: Bool, _ completion: @escaping (Result<Void, Error>) -> Void) {
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
         

@@ -20,19 +20,18 @@ final class ImagesListCell: UITableViewCell {
     @IBOutlet weak var gradientView: UIImageView! // Аутлет градиента
     @IBOutlet weak var dateLabel: UILabel! //Аутлет даты создания фото
     
-    
+    // Параметры ячейки
     func setupCellImage() {
-        cellImage.layer.cornerRadius = 16 // Сделали скругление всех углов фотки (дублирование сториборда на всякий случай)
-        cellImage.layer.masksToBounds = true // Сделали обрезание всех подслоев фотки под радиус (дублирование сториборда на всякий случай)
+        cellImage.layer.cornerRadius = 16
+        cellImage.layer.masksToBounds = true 
     }
     
-    // Настройка слоя градинта (инкапсулированная)
+    // Настройка градиента в нижней части ячейки
     func setupGradientLayer() {
-        // Создание градиента внизу каждого фото
         gradientLayer.frame = gradientView.bounds
         gradientLayer.colors = [UIColor.gradientColor1.cgColor, UIColor.gradientColor2.cgColor] // делаем переход цветов
         gradientView.layer.addSublayer(gradientLayer)
-        gradientView.layer.cornerRadius = 16 // Делаем скругление радиусов поля градиента (обязательно дополнение про нижние углы)
+        gradientView.layer.cornerRadius = 16
         gradientView.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner] // Тут мы определяем что скругление только по нижним углам
     }
     
@@ -41,10 +40,12 @@ final class ImagesListCell: UITableViewCell {
         cellImage.kf.cancelDownloadTask()
     }
     
-    @IBAction func likeButtonPushed(_ sender: Any) {
+    /// Метод нажатия на кнопку простановки like
+    @IBAction private func likeButtonPushed(_ sender: Any) {
         delegate?.imageListCellDidTapLike(self)
     }
     
+    /// Метод простановки like
     func pictureIsLiked(isLiked: Bool) {
         let likeImage = isLiked ? UIImage.likeImageActive : UIImage.likeImageNonactive
         likeButton.setImage(likeImage, for: .normal)

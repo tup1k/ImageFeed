@@ -36,10 +36,10 @@ final class ProfileLogoutService {
     
     private func cleanImageCell() {
         let cache = ImageCache.default
-                cache.clearMemoryCache()
-                cache.clearDiskCache()
-                cache.cleanExpiredMemoryCache()
-                cache.clearCache()
+        cache.clearMemoryCache()
+        cache.clearDiskCache()
+        cache.cleanExpiredMemoryCache()
+        cache.clearCache()
     }
     
     

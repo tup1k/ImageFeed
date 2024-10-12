@@ -37,24 +37,24 @@ final class SingleImageViewController: UIViewController {
     }
     
     // Экшн кнопки выхода из просмотра картинки
-    @IBAction func didTapSingleImageBackButton(_ sender: Any) {
+    @IBAction private func didTapSingleImageBackButton(_ sender: Any) {
         dismiss(animated: true, completion: nil)
     }
     
     // Экшн кнопки шеринга картинки
-    @IBAction func tapShareButton(_ sender: Any) {
+    @IBAction private func tapShareButton(_ sender: Any) {
         guard let fullImage = imageView.image else { return }
         didTapShareButton(image: fullImage)
     }
     
-    //  Функция расшаривания картинок
+    ///  Функция расшаривания картинок
     private func didTapShareButton(image: UIImage) {
         let shareImage = [image]
         let toShare = UIActivityViewController(activityItems: shareImage, applicationActivities: nil)
         present(toShare, animated: true, completion: nil)
     }
     
-    // Функция подгона картинки под экран телефона (надо не забыть повторить теорию)
+    /// Функция подгона картинки под экран телефона
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
         let minZoomScale = scrollView.minimumZoomScale
         let maxZoomScale = scrollView.maximumZoomScale
@@ -72,6 +72,7 @@ final class SingleImageViewController: UIViewController {
         scrollView.setContentOffset(CGPoint(x: x, y: y), animated: false)
     }
     
+    /// Метод загрузки полноразмерного фото
     private func loadLargeImageFromAPI(imageURL: URL?) {
         guard let imageURL else { return }
         UIBlockingProgressHUD.show()
@@ -90,6 +91,7 @@ final class SingleImageViewController: UIViewController {
         }
     }
     
+    /// Метод показывает ошибку загрузки фото
     private func showErrorAlert() {
         let alert = UIAlertController(title: "Не удалось загрузить фото.", message: "Попробовать еще раз?", preferredStyle: .alert)
         let noButtonAction = UIAlertAction(title: "Нет", style: .cancel)

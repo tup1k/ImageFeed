@@ -19,12 +19,11 @@ final class ImagesListViewController: UIViewController {
     private let imageListService = ImagesListService.shared
     private let myToken = OAuth2TokenStorage()
     
-    // MARK: Форматирование даты по параметры ленты
+    /// Форматирование даты в ячейке
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .long
         formatter.timeStyle = .none
-        formatter.locale = Locale(identifier: "ru") // Русскоязычная дата
         return formatter
     }()
     
@@ -44,8 +43,8 @@ final class ImagesListViewController: UIViewController {
         print("ТЕПЕРЬ ТВОЙ TOKEN РАВЕН - \(myToken.token ?? "НЕ ИДЕНТИФИЦИИРУЕТСЯ")")
     }
     
-    // MARK: Обновление таблицы
-    func updateTableViewAnimated() {
+    /// Метод отвечает за анимированное обновление таблицы
+    private func updateTableViewAnimated() {
         let oldCount = photoList.count
         let newCount = imageListService.photos.count
         photoList = imageListService.photos
@@ -60,7 +59,7 @@ final class ImagesListViewController: UIViewController {
         }
     }
     
-    // Метод конфигурации внутренностей ячейки - картинки, кнопки, текст
+    /// Метод настройки параметров ячейки
     private func configCell(for cell: ImagesListCell, with indexPath: IndexPath) {
         let newImage = photoList[indexPath.row]
         let newImageURL = newImage.thumbImageURL
@@ -74,9 +73,9 @@ final class ImagesListViewController: UIViewController {
         }
         
         if let newImageCreationDate = newImage.createdAt {
-            cell.dateLabel.text = dateFormatter.string(from: newImageCreationDate) // Присваиваем дату в нужном формате аутлету даты
+            cell.dateLabel.text = dateFormatter.string(from: newImageCreationDate)
         } else {
-            cell.dateLabel.text = "" // Если даты нет ставим пустую строку
+            cell.dateLabel.text = ""
         }
         
         cell.pictureIsLiked(isLiked: newImage.isLiked)
@@ -86,6 +85,7 @@ final class ImagesListViewController: UIViewController {
         cell.setupGradientLayer() // вызываем инкапсулированную функцию свойств градиента
     }
     
+    /// Метод отвечает за переход в окно просмотра полноразмерного фото
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == showSingleImageSegueIdentifier {
             guard
@@ -102,7 +102,7 @@ final class ImagesListViewController: UIViewController {
         }
     }
     
-    // MARK: - Метод загружающий фото в ячейку
+    /// Метод отвечает за отображения данных в ячейке
     func tableView(_ tableView: UITableView,
                    willDisplay cell: UITableViewCell,
                    forRowAt indexPath: IndexPath) {
@@ -113,12 +113,12 @@ final class ImagesListViewController: UIViewController {
 }
 
 extension ImagesListViewController: UITableViewDelegate {
-    // Метод, отвечающий за действия при нажатии на фото - выводит большое фото
+    /// Метод отвечает за действия при нажатии ячейки
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: showSingleImageSegueIdentifier, sender: indexPath)
     }
     
-    // Метод отвечающий за подгон размеров картинки в ячейке
+    /// Метод отвечает за размеры каждой ячейки в таблицн
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         let newImage = imageListService.photos[indexPath.row]
         let imageDynamicWidth = tableView.bounds.width - 16 - 16
@@ -130,7 +130,7 @@ extension ImagesListViewController: UITableViewDelegate {
 
 extension ImagesListViewController: UITableViewDataSource {
     
-    // Метод определяет количество ячеек в секции таблицы - пока равно числу мок-овских фоток
+    /// Метод определяет количество ячеек в секции таблицы
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return photoList.count
     }
@@ -151,6 +151,7 @@ extension ImagesListViewController: UITableViewDataSource {
 }
 
 extension ImagesListViewController: ImagesListCellDelegate {
+    /// Метод установки like
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
         
@@ -170,6 +171,7 @@ extension ImagesListViewController: ImagesListCellDelegate {
         }
     }
     
+    /// Метод вызова уведомления об ошибке установки like
     private func likeAlert() {
         let alert = UIAlertController(title: "Внимание!", message: "Функция недоступна, попробуйте позже", preferredStyle: .alert)
         let okButtonAction = UIAlertAction(title: "OK", style: .cancel)

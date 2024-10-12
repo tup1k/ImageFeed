@@ -44,10 +44,12 @@ final class ProfileViewController: UIViewController {
         }
         updateAvatar()
         updateProfileDetails(profile: profileInfoPVC.profile) // Загрузка данных профиля из инета
+        
+        
     }
     
-    // Создание сабвью и закреплений для всех элементов ProfileViewController
-    func createSubview() {
+    /// Метод создание сабвью для всех элементов контроллера профиля
+    private func createSubview() {
         [profileImage,
          nameLabel,
          accountName,
@@ -58,7 +60,7 @@ final class ProfileViewController: UIViewController {
         }
     }
     
-    // Метод загрузки данных профиля с сайта
+    /// Метод загрузки данных профиля с сайта
     private func updateProfileDetails(profile: Profile?) {
         guard let profile = profileInfoPVC.profile else { return }
         nameLabel.text = profile.name
@@ -66,7 +68,7 @@ final class ProfileViewController: UIViewController {
         accountDescription.text = profile.bio
     }
     
-    // Метод загрузки аватара из api unsplash
+    /// Метод загрузки аватара из api unsplash
     private func updateAvatar() {
         guard
             let profileImageURL = profileImagePVC.avatarURL,
@@ -96,7 +98,7 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    // Параметры отображения Имя Фамилия пользователя
+    /// Метод настройки отображения ФАМИЛИЯ ИМЯ пользователя
     private func nameLabelFunc() {
         nameLabel.textColor = .ypWhiteIOS
         nameLabel.font = UIFont.systemFont(ofSize: 23, weight: .bold)
@@ -108,7 +110,7 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    // Параметры отображения название @пользователя
+    /// Метод настройки отображения названия @пользователя
     private func accountNameFunc() {
         accountName.textColor = .ypGrayIOS
         accountName.font = UIFont.systemFont(ofSize: 13, weight: .regular)
@@ -120,7 +122,7 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    // Параметры отображения статуса пользователя
+    /// Метод настройки отображения статуса пользователя
     private func accountDescriptionFunc() {
         accountDescription.textColor = .ypWhiteIOS
         accountDescription.font = UIFont.systemFont(ofSize: 13, weight: .regular)
@@ -132,7 +134,7 @@ final class ProfileViewController: UIViewController {
         ])
     }
     
-    // Параметры отображения кнопки выхода из аккаунта
+    /// Метод настройки кнопки выхода
     private func logOutButtonFunc() {
         let logoutButtonImage = UIImage(named: "LogOutImage")
         logoutButton.setImage(logoutButtonImage, for: .normal)
@@ -147,22 +149,25 @@ final class ProfileViewController: UIViewController {
     }
     
     
-    //  Функция выхода из приложения
+    ///  Функция, выполняемая при нажатии кнопки выхода
     @objc
     private func tapLogOutButton() {
-        let alert = UIAlertController(title: "Внимание!", message: "Вы уверены что хотите выйти?", preferredStyle: .alert)
+        let alert = UIAlertController(title: "Пока, пока!", message: "Уверены что хотите выйти?", preferredStyle: .alert)
+        
         let yesButtonAction = UIAlertAction(title: "Да", style: .default, handler: { [weak self] _ in
             guard let self = self else { return }
             profileLogOut.logout()
             profileExitTransit()
             print("ВЫ ВЫШЛИ ИЗ ПРОФИЛЯ. ТОКЕН - \(myToken.token ?? "НЕ ИДЕНТИФИЦИИРУЕТСЯ")")
         })
-        let noButtonAction = UIAlertAction(title: "Нет", style: .cancel)
+        let noButtonAction = UIAlertAction(title: "Нет", style: .default)
+        
         alert.addAction(yesButtonAction)
         alert.addAction(noButtonAction)
-        self.present(alert, animated: true)
+        self.present(alert, animated: true, completion: nil)
     }
 
+    /// Функция перехода в экран авторизации при выходе из профиля
     private func profileExitTransit() {
         guard let window = UIApplication.shared.windows.first else { return }
         let finalVC = SplashViewController()
