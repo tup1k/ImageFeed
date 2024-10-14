@@ -44,11 +44,11 @@ final class ProfileImageService {
     func fetchProfileImageURL(username: String, _ completion: @escaping (Result<String, Error>) -> Void) {
         
         assert(Thread.isMainThread) // Проверяем что мы в главном потоке
-        guard lastUsername != username else {
+        if lastUsername == username { 
             completion(.failure(ProfileImageServiceError.invalidRequest))
             print("[fetchProfileImageURL]: [Состояние гонки] - Повторный вызов метода загрузки аватара профиля.")
-            return
-        }
+            return}
+        
         task?.cancel()
         lastUsername = username
         
@@ -72,10 +72,11 @@ final class ProfileImageService {
                 NotificationCenter.default.post(name: ProfileImageService.didChangeNotification,
                                                 object: self,
                                                 userInfo: ["URL": self.avatarURL as Any])
-                
+                self.lastUsername = nil
             case .failure(let error):
                     completion(.failure(error))
                     print("[fetchProfileImageURL]: [objectTask] - Ошибка загрузки JSON для URL: \(error)")
+                self.lastUsername = nil
             }
             self.task = nil
         }

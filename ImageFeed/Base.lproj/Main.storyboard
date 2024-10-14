@@ -48,6 +48,9 @@
                                                     <state key="normal" title=" " image="LikeImageNonactive">
                                                         <color key="titleColor" name="Color"/>
                                                     </state>
+                                                    <connections>
+                                                        <action selector="likeButtonPushed:" destination="G1I-mT-9ne" eventType="touchUpInside" id="h3k-SX-Tnx"/>
+                                                    </connections>
                                                 </button>
                                                 <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="pFr-qe-Pa0" userLabel="GradientView">
                                                     <rect key="frame" x="16" y="185" width="361" height="30"/>

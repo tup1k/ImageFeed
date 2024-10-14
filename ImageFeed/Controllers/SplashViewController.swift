@@ -16,6 +16,7 @@ final class SplashViewController: UIViewController {
     private let profileInfoSVC = ProfileService.shared // Вызов синглтона загрузки данных профиля
     private let profileImageSVC = ProfileImageService.shared // Вызов синглтона загрузки аватарки
     private let tokenStorageSVC = OAuth2TokenStorage() // Создаем экземпляр хранилища токена
+    private var haveToken = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,11 +27,13 @@ final class SplashViewController: UIViewController {
         super.viewDidAppear(animated)
         
         // !!!!! Ключевое место авторизации - если есть токен сразу переходим к считыванию данных API
+        guard !haveToken else { return }
         if let token = tokenStorageSVC.token {
             self.fetchProfileSVC(token)
         } else {
             switchToAuthViewController()
         }
+        haveToken = true
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -38,7 +41,7 @@ final class SplashViewController: UIViewController {
         setNeedsStatusBarAppearanceUpdate()
     }
     
-    // Метод перехода в окно авторизации вместо сигвея
+    /// Метод перехода в окно авторизации вместо сигвея
     private func switchToAuthViewController() {
         guard let authViewController = UIStoryboard(name: "Main", bundle: .main)
             .instantiateViewController(identifier: "AuthViewController") as? AuthViewController else {return}
@@ -47,7 +50,7 @@ final class SplashViewController: UIViewController {
         present(authViewController, animated: true)
     }
     
-    // Метод переключения в экран с тап-баром
+    /// Метод переключения в экран с тап-баром
     private func switchToTabBarController() {
         guard let window = UIApplication.shared.windows.first else {
             print("[switchToTabBarController]: Некорректная конфигурация окна")
@@ -59,7 +62,8 @@ final class SplashViewController: UIViewController {
         window.rootViewController = tabBarController
     }
     
-    // Метод добавления логотипа кодом
+    
+    /// Метод добавления логотипа приложения
     private func addSplashLogo() {
         splashLogo.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(splashLogo)
@@ -77,8 +81,9 @@ final class SplashViewController: UIViewController {
 }
 
 extension SplashViewController: AuthViewControllerDelegate {
+    /// Метод авторизации в приложении
     func authViewController(_ vc: AuthViewController, didAuthenticateWithCode code: String) {
-        vc.dismiss(animated: true) // Закрыли WebView
+        vc.presentingViewController?.dismiss(animated: true)
         UIBlockingProgressHUD.show() // Заблокировали кнопки показом анимации
         
         service.fetchOAuthToken(code) { [weak self] result in
@@ -95,6 +100,7 @@ extension SplashViewController: AuthViewControllerDelegate {
         }
     }
     
+    /// Метод загрузки аватара пользователя
     private func fetchProfileSVC(_ token: String) {
         UIBlockingProgressHUD.show()
         profileInfoSVC.fetchProfile(token) { [weak self] result in
@@ -112,6 +118,7 @@ extension SplashViewController: AuthViewControllerDelegate {
         }
     }
     
+    /// Метод показа уведомлений при ошибке авторизации
     private func showAlert() {
         let alert = UIAlertController(title: "Что-то пошло не так(", // заголовок всплывающего окна
                                       message: "Не удалось войти в систему", // текст во всплывающем окне

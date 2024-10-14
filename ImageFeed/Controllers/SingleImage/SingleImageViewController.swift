@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Kingfisher
 
 final class SingleImageViewController: UIViewController {
     var image: UIImage? {
@@ -17,6 +18,8 @@ final class SingleImageViewController: UIViewController {
             rescaleAndCenterImageInScrollView(image: image)
         }
     }
+    
+    var largeImageURL: URL?
     
     @IBOutlet private var shareButton: UIButton! // Аутлет кнопки шеринга
     @IBOutlet private var imageView: UIImageView! // Аутлет картинки
@@ -30,31 +33,28 @@ final class SingleImageViewController: UIViewController {
         scrollView.minimumZoomScale = 0.1
         scrollView.maximumZoomScale = 1.25
         
-        guard let image else { return }
-        imageView.image = image
-        imageView.frame.size = image.size
-        rescaleAndCenterImageInScrollView(image: image)
+        loadLargeImageFromAPI(imageURL: largeImageURL)
     }
     
     // Экшн кнопки выхода из просмотра картинки
-    @IBAction func didTapSingleImageBackButton(_ sender: Any) {
+    @IBAction private func didTapSingleImageBackButton(_ sender: Any) {
         dismiss(animated: true, completion: nil)
     }
     
     // Экшн кнопки шеринга картинки
-    @IBAction func tapShareButton(_ sender: Any) {
-        guard let image else { return }
-        didTapShareButton(image: image)
+    @IBAction private func tapShareButton(_ sender: Any) {
+        guard let fullImage = imageView.image else { return }
+        didTapShareButton(image: fullImage)
     }
     
-    //  Функция расшаривания картинок
+    ///  Функция расшаривания картинок
     private func didTapShareButton(image: UIImage) {
         let shareImage = [image]
         let toShare = UIActivityViewController(activityItems: shareImage, applicationActivities: nil)
         present(toShare, animated: true, completion: nil)
     }
     
-    // Функция подгона картинки под экран телефона (надо не забыть повторить теорию)
+    /// Функция подгона картинки под экран телефона
     private func rescaleAndCenterImageInScrollView(image: UIImage) {
         let minZoomScale = scrollView.minimumZoomScale
         let maxZoomScale = scrollView.maximumZoomScale
@@ -70,6 +70,38 @@ final class SingleImageViewController: UIViewController {
         let x = (newContentSize.width - visibleRectSize.width) / 2
         let y = (newContentSize.height - visibleRectSize.height) / 2
         scrollView.setContentOffset(CGPoint(x: x, y: y), animated: false)
+    }
+    
+    /// Метод загрузки полноразмерного фото
+    private func loadLargeImageFromAPI(imageURL: URL?) {
+        guard let imageURL else { return }
+        UIBlockingProgressHUD.show()
+        imageView.kf.setImage(with: imageURL) { [weak self] result in
+            UIBlockingProgressHUD.dismiss()
+            
+            guard let self = self else { return }
+            switch result {
+            case .success(let imageResult):
+                self.imageView.image = imageResult.image
+                self.imageView.frame.size = imageResult.image.size
+                self.rescaleAndCenterImageInScrollView(image: imageResult.image)
+            case .failure:
+                self.showErrorAlert()
+            }
+        }
+    }
+    
+    /// Метод показывает ошибку загрузки фото
+    private func showErrorAlert() {
+        let alert = UIAlertController(title: "Не удалось загрузить фото.", message: "Попробовать еще раз?", preferredStyle: .alert)
+        let noButtonAction = UIAlertAction(title: "Нет", style: .cancel)
+        let yesButtonAction = UIAlertAction(title: "Да", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+            self.loadLargeImageFromAPI(imageURL: largeImageURL)
+        }
+        alert.addAction(noButtonAction)
+        alert.addAction(yesButtonAction)
+        self.present(alert, animated: true)
     }
 }
 

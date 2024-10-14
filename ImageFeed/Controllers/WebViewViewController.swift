@@ -55,7 +55,7 @@ final class WebViewViewController: UIViewController {
     }
     
     // Кнопка возврата из окна авторизации сделаная аутлетом и делегирующая ответственность
-    @IBAction func didTapBackButton(_ sender: Any) {
+    @IBAction private func didTapBackButton(_ sender: Any) {
         delegate?.webViewViewControllerDidCancel(self)
     }
     
