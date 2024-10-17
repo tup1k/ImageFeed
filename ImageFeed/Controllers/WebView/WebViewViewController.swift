@@ -8,20 +8,24 @@
 import UIKit
 import WebKit
 
+public protocol WebViewViewControllerProtocol: AnyObject {
+    var presenter: WebViewPresenterProtocol? { get set}
+    func load(request: URLRequest)
+    func setProgressValue(_ newValue: Float)
+    func setProgressHidden(_ isHidden: Bool)
+}
+
 // Протокол определяющий методы делегирования между окном авторизации и окном веб-контента
 protocol WebViewViewControllerDelegate: AnyObject {
     func webViewViewController(_ vc: WebViewViewController, didAuthenticateWithCode code: String)
     func webViewViewControllerDidCancel(_ vc: WebViewViewController)
 }
 
-// Ссылка для авторизации на сайте
-enum WebViewConstants {
-    static let unsplashAuthorizeURLString = "https://unsplash.com/oauth/authorize"
-}
-
-final class WebViewViewController: UIViewController {
+final class WebViewViewController: UIViewController & WebViewViewControllerProtocol {
+    
     private var estimatedProgressObservation: NSKeyValueObservation?
     
+    var presenter: WebViewPresenterProtocol?
     weak var delegate: WebViewViewControllerDelegate? // Создаем делегата для контроллера (разобраться)
     
     @IBOutlet private var webView: WKWebView! // Аутлет веб-формы
@@ -32,26 +36,28 @@ final class WebViewViewController: UIViewController {
         super.viewDidLoad()
         
         webView.navigationDelegate = self // навигационный делегат между webview и webviewviewcontroller (разобраться)
-        loadAuthView() // Загрузка во webView экрана авторизации из сервиса Unsplash
-        updateProgress() // Обозреватель за изменением статуса загрузки через прогресс-бар
+        presenter?.viewDidload()
+//        updateProgress() // Обозреватель за изменением статуса загрузки через прогресс-бар
         
-        estimatedProgressObservation = webView.observe(
-            \.estimatedProgress,
-             options: [],
-             changeHandler: { [weak self] _, _ in
-                 guard let self = self else { return }
-                 self.updateProgress()
-             })
+//        estimatedProgressObservation = webView.observe(
+//            \.estimatedProgress,
+//             options: [],
+//             changeHandler: { [weak self] _, _ in
+//                 guard let self = self else { return }
+//                 self.updateProgress()
+//             })
     }
     
     // поток появления контроллера
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
     }
     
     // поток исчезновения контроллера
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
+        webView.removeObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), context: nil)
     }
     
     // Кнопка возврата из окна авторизации сделаная аутлетом и делегирующая ответственность
@@ -59,37 +65,26 @@ final class WebViewViewController: UIViewController {
         delegate?.webViewViewControllerDidCancel(self)
     }
     
-    // Метод сбора ссылки и загрузки окна авторизации
-    private func loadAuthView() {
-        // создаем базовую ссылку страницы авторизации
-        guard var urlComponents = URLComponents(string: WebViewConstants.unsplashAuthorizeURLString) else {
-            print("Не подгрузилась ссылка на сервис авторизации Unsplash")
-            return
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == #keyPath(WKWebView.estimatedProgress) {
+            presenter?.didUpdateProgressValue(webView.estimatedProgress)
+        } else {
+            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
         }
-        
-        // Прописываем в URLQueryItems параметры API необходимые для авторизации в мое приложение
-        urlComponents.queryItems = [
-            URLQueryItem(name: "client_id", value: Constants.accessKey),
-            URLQueryItem(name: "redirect_uri", value: Constants.redirectURI),
-            URLQueryItem(name: "response_type", value: "code"),
-            URLQueryItem(name: "scope", value: Constants.accessScope)
-        ]
-        
-        // создаем ссылку со всеми параметрами API
-        guard let url = urlComponents.url else {
-            print("Не собралась общая ссылка авторизации с ключами")
-            return
-        }
-        
-        let request = URLRequest(url: url) // Создаем запрос собранной ссылки для авторизации в мое приложение
-        webView.load(request) // подгружаем во вебвью наш экран авторизации
     }
     
-    // Метод вычисление процентов загрузки прогресс бара
-    private func updateProgress() {
-        progressView.progress = Float(webView.estimatedProgress)
-        progressView.isHidden = fabs(webView.estimatedProgress - 1.0) <= 0.0001
+    func load(request: URLRequest) {
+        webView.load(request)
     }
+    
+    func setProgressValue(_ newValue: Float) {
+        progressView.progress = newValue
+    }
+    
+    func setProgressHidden(_ isHidden: Bool) {
+        progressView.isHidden = isHidden
+    }
+    
 }
 
 // Расширение описывает один из методов навигационного делегата позволяющий совершать действия при совпадении параметра code
@@ -111,14 +106,8 @@ extension WebViewViewController: WKNavigationDelegate {
     
     // Метод проверяющий успешная авторизация или нет
     private func code(from navigationAction: WKNavigationAction) -> String? {
-        if
-            let url = navigationAction.request.url,
-            let urlComponents = URLComponents(string: url.absoluteString),
-            urlComponents.path == "/oauth/authorize/native",
-            let items = urlComponents.queryItems,
-            let codeItem = items.first(where: { $0.name == "code"})
-        {
-            return codeItem.value
+        if let url = navigationAction.request.url {
+            return presenter?.code(from: url)
         } else {
             return nil
         }
