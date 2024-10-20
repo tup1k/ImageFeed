@@ -12,7 +12,6 @@ final class ImagesListServiceTests: XCTestCase {
     private let tokenStoragePVC = OAuth2TokenStorage()
     
     func testFetchPhotos() {
-        guard let token = tokenStoragePVC.token else { return }
         let service = ImagesListService.shared
         
         let expectation = self.expectation(description: "Wait for Notification")
@@ -26,13 +25,13 @@ final class ImagesListServiceTests: XCTestCase {
         service.fetchPhotosNextPage()
         wait(for: [expectation], timeout: 10)
         
-        XCTAssertEqual(service.photos.count, 20)
+        XCTAssertEqual(service.photos.count, 10)
         
         service.fetchPhotosNextPage()
         
         wait(for: [expectation], timeout: 10)
         
-        XCTAssertEqual(service.photos.count, 10)
+        XCTAssertEqual(service.photos.count, 20)
         print(service.photos.count)
            
         }

@@ -24,6 +24,7 @@ final class ImagesListCell: UITableViewCell {
     func setupCellImage() {
         cellImage.layer.cornerRadius = 16
         cellImage.layer.masksToBounds = true 
+        likeButton.accessibilityIdentifier = "LikeButton"
     }
     
     // Настройка градиента в нижней части ячейки
