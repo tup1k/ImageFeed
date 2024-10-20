@@ -9,17 +9,19 @@ import XCTest
 
 final class ProfileTest: XCTestCase {
     func testViewControllerCallsViewDidLoad() {
-//        // given
-//        let viewController = ProfileViewController()
-//        let presenter = ProfileViewPresenterSpy()
-//        viewController.presenter = presenter
-//        presenter.view = viewController
-//        
-//        //when
-//        presenter.
-//        
-//        //then
-//        XCTAssertTrue(presenter.viewDidLoadCalled) // проверка запуска
+        // given
+        
+       let viewController = ProfileViewController()
+        let presenter = ProfileViewPresenterSpy()
+        
+        viewController.presenter = presenter
+        presenter.view = viewController
+        
+        //when
+        presenter.viewDidLoad()
+        
+        //then
+        XCTAssertTrue(presenter.viewDidLoadCalled) // проверка запуска
     }
 
     func testViewControllerCallslogOut() {

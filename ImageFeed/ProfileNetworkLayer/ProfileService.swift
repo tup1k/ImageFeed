@@ -12,29 +12,6 @@ enum ProfileServiceError: Error {
     case invalidRequest
 }
 
-// Структура данных пользователя, запрашиваемых в профиль из JSON
-struct ProfileResult: Decodable {
-    let userName: String // имя пользователя в системе
-    let firstName: String // Настоящее имя пользователя
-    let lastName: String? // Настоящая фамилия пользователя
-    let bio: String?  // Информация о пользователе
-    
-    private enum CodingKeys : String, CodingKey {
-        case userName = "username"
-        case firstName = "first_name"
-        case lastName = "last_name"
-        case bio = "bio"
-    }
-}
-
-// Структура данных для загрузки на страницу профиля
-struct Profile {
-    let userName: String // имя пользователя в системе
-    let name: String // Имя и фамилия пользователя
-    let loginName: String? // @userName
-    let bio: String? // Информация о пользователе
-}
-
 final class ProfileService {
     private let urlSession = URLSession.shared // Вводим замену для метода URLSession
     private var task: URLSessionTask? // Название созданного запроса JSON в fetchProfile

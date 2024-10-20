@@ -100,6 +100,7 @@
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="YP Black (iOS)"/>
+                        <accessibility key="accessibilityConfiguration" identifier="ImagesListViewController"/>
                         <constraints>
                             <constraint firstItem="YLF-Io-aK2" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="IKf-YK-Eq6"/>
                             <constraint firstItem="YLF-Io-aK2" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Lk1-Eb-XEY"/>

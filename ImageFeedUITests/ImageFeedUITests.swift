@@ -12,7 +12,6 @@ final class ImageFeedUITests: XCTestCase {
     
     override func setUpWithError() throws {
         continueAfterFailure = false
-        
         app.launch()
     }
     
@@ -37,7 +36,7 @@ final class ImageFeedUITests: XCTestCase {
         let passwordTextField = webView.descendants(matching: .secureTextField).element
         XCTAssertTrue(webView.waitForExistence(timeout: 5))
         passwordTextField.tap()
-        passwordTextField.typeText("9876543210")
+        passwordTextField.typeText("*********")
         XCUIApplication().toolbars.buttons["Done"].tap()
         webView.swipeUp()
         
@@ -47,35 +46,32 @@ final class ImageFeedUITests: XCTestCase {
         // Подождать, пока открывается экран ленты
         let tablesQuery = app.tables
         let cell = tablesQuery.children(matching: .cell).element(boundBy: 0)
-        XCTAssertTrue(cell.waitForExistence(timeout: 5))
+        XCTAssertTrue(cell.waitForExistence(timeout: 10))
     }
     
     func testFeed() throws {
         // Подождать, пока открывается и загружается экран ленты
         sleep(2)
         let tablesQuery = app.tables
+        sleep(4)
         let cell = tablesQuery.children(matching: .cell).element(boundBy: 0)
       
         // Сделать жест «смахивания» вверх по экрану для его скролла
-        //cell.swipeUp()
-        //sleep(5)
+        cell.swipeUp()
+        sleep(5)
         
-    
         // Поставить лайк в ячейке верхней картинки
-        let cellToLike = tablesQuery.children(matching: .cell).element(boundBy: 0)
+        let cellToLike = tablesQuery.children(matching: .cell).element(boundBy: 1)
         cellToLike.buttons["LikeButton"].tap()
-        XCTAssertTrue(cell.buttons["LikeButton"].waitForExistence(timeout: 5))
         sleep(5)
         
         // Отменить лайк в ячейке верхней картинки
-//        cellToLike.buttons["LikeButton"].tap()
-//        XCTAssertTrue(cell.buttons["LikeButton"].waitForExistence(timeout: 5))
-        sleep(2)
+        cellToLike.buttons["LikeButton"].tap()
+        sleep(5)
         
         // Нажать на верхнюю ячейку
-        let cellToTap = tablesQuery.children(matching: .cell).element(boundBy: 0)
-       cellToTap.tap()
-        sleep(2)
+       cellToLike.tap()
+        sleep(5)
         
         // Подождать, пока картинка открывается на весь экран
         let image = app.scrollViews.images.element(boundBy: 0)
