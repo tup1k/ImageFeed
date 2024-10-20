@@ -36,6 +36,7 @@ final class WebViewViewController: UIViewController & WebViewViewControllerProto
         super.viewDidLoad()
         
         webView.navigationDelegate = self // навигационный делегат между webview и webviewviewcontroller (разобраться)
+        webView.accessibilityIdentifier = "UnsplashWebView"
         presenter?.viewDidload()
 //        updateProgress() // Обозреватель за изменением статуса загрузки через прогресс-бар
         

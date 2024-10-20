@@ -9,7 +9,18 @@
 import UIKit
 import Kingfisher
 
-final class ImagesListViewController: UIViewController {
+protocol ImagesViewControllerProtocol: AnyObject {
+    var presenter: ImagesListPresenterProtocol? { get set}
+    func importImagesToTable(oldCount: Int, newCount: Int)
+//    func load(request: URLRequest)
+//    func setProgressValue(_ newValue: Float)
+//    func setProgressHidden(_ isHidden: Bool)
+}
+
+
+final class ImagesListViewController: UIViewController, ImagesViewControllerProtocol {
+    var presenter: ImagesListPresenterProtocol?
+    
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
     private var imagesListServiceObserver: NSObjectProtocol?
     
@@ -18,6 +29,7 @@ final class ImagesListViewController: UIViewController {
     private var photoList: [Photo] = []
     private let imageListService = ImagesListService.shared
     private let myToken = OAuth2TokenStorage()
+    var imagesListPresenter = ImagesListPresenter()
     
     /// Форматирование даты в ячейке
     private lazy var dateFormatter: DateFormatter = {
@@ -37,6 +49,7 @@ final class ImagesListViewController: UIViewController {
             object: nil, queue: .main) {[weak self] _ in
                 guard let self = self else { return }
                 self.updateTableViewAnimated()
+//                imagesListPresenter.updateTableViewAnimated()
                 UIBlockingProgressHUD.dismiss()
             }
         imageListService.fetchPhotosNextPage()
@@ -57,6 +70,16 @@ final class ImagesListViewController: UIViewController {
                 tableView.insertRows(at: indexPaths, with: .automatic)
             } completion: { _ in }
         }
+    }
+    
+    func importImagesToTable(oldCount: Int, newCount: Int) {
+        tableView.performBatchUpdates {
+            var indexPaths: [IndexPath] = []
+            for i in oldCount..<newCount {
+                indexPaths.append(IndexPath(row: i, section: 0))
+            }
+            tableView.insertRows(at: indexPaths, with: .automatic)
+        } completion: { _ in }
     }
     
     /// Метод настройки параметров ячейки

@@ -9,7 +9,14 @@ import UIKit
 import Kingfisher
 import SwiftKeychainWrapper
 
-final class ProfileViewController: UIViewController {
+public protocol ProfileViewControllerProtocol: AnyObject {
+    var presenter: ProfilePresenterProtocol? { get set}
+    func logOutProfile()
+}
+
+final class ProfileViewController: UIViewController, ProfileViewControllerProtocol {
+    
+    
     
     private let profileImage = UIImageView()
     private let nameLabel = UILabel()
@@ -24,6 +31,9 @@ final class ProfileViewController: UIViewController {
     
     private let imageListStore = ImagesListService.shared
     private let profileLogOut = ProfileLogoutService.shared
+    
+    var presenter: ProfilePresenterProtocol?
+    var profilePresenter = ProfileViewPresenter()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -137,6 +147,7 @@ final class ProfileViewController: UIViewController {
     /// Метод настройки кнопки выхода
     private func logOutButtonFunc() {
         let logoutButtonImage = UIImage(named: "LogOutImage")
+        logoutButton.accessibilityIdentifier = "LogOut"
         logoutButton.setImage(logoutButtonImage, for: .normal)
         logoutButton.addTarget(self, action: #selector(tapLogOutButton), for: .touchUpInside)
         
@@ -156,8 +167,11 @@ final class ProfileViewController: UIViewController {
         
         let yesButtonAction = UIAlertAction(title: "Да", style: .default, handler: { [weak self] _ in
             guard let self = self else { return }
-            profileLogOut.logout()
-            profileExitTransit()
+//            profileLogOut.logout()
+//            profileExitTransit()
+            
+            logOutProfile()
+            
             print("ВЫ ВЫШЛИ ИЗ ПРОФИЛЯ. ТОКЕН - \(myToken.token ?? "НЕ ИДЕНТИФИЦИИРУЕТСЯ")")
         })
         let noButtonAction = UIAlertAction(title: "Нет", style: .default)
@@ -166,18 +180,22 @@ final class ProfileViewController: UIViewController {
         alert.addAction(noButtonAction)
         self.present(alert, animated: true, completion: nil)
     }
+    
+    func logOutProfile() {
+        profilePresenter.profileExitTransit()
+    }
 
     /// Функция перехода в экран авторизации при выходе из профиля
-    private func profileExitTransit() {
-        guard let window = UIApplication.shared.windows.first else { return }
-        let finalVC = SplashViewController()
-        window.rootViewController = finalVC
-        window.makeKeyAndVisible()
-        UIView.transition(with: window,
-                          duration: 0.3,
-                          options: .transitionCrossDissolve,
-                          animations: nil,
-                          completion: nil)
-    }
+//    private func profileExitTransit() {
+//        guard let window = UIApplication.shared.windows.first else { return }
+//        let finalVC = SplashViewController()
+//        window.rootViewController = finalVC
+//        window.makeKeyAndVisible()
+//        UIView.transition(with: window,
+//                          duration: 0.3,
+//                          options: .transitionCrossDissolve,
+//                          animations: nil,
+//                          completion: nil)
+//    }
 }
 
