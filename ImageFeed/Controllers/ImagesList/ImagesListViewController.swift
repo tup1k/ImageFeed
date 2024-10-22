@@ -9,7 +9,16 @@
 import UIKit
 import Kingfisher
 
-final class ImagesListViewController: UIViewController {
+protocol ImagesListViewControllerProtocol: AnyObject {
+    var presenter: ImagesListPresenterProtocol? { get set}
+    func importImagesToTable(oldCount: Int, newCount: Int)
+    func tapedLike(indexPath: IndexPath)
+    func showLikeAlert()
+}
+
+final class ImagesListViewController: UIViewController, ImagesListViewControllerProtocol {
+    var presenter: ImagesListPresenterProtocol?
+    
     private let showSingleImageSegueIdentifier = "ShowSingleImage"
     private var imagesListServiceObserver: NSObjectProtocol?
     
@@ -18,6 +27,7 @@ final class ImagesListViewController: UIViewController {
     private var photoList: [Photo] = []
     private let imageListService = ImagesListService.shared
     private let myToken = OAuth2TokenStorage()
+    var imagesListPresenter = ImagesListPresenter()
     
     /// Форматирование даты в ячейке
     private lazy var dateFormatter: DateFormatter = {
@@ -30,33 +40,18 @@ final class ImagesListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.contentInset = UIEdgeInsets(top: 12, left: 0, bottom: 12, right: 0)
-        
-        UIBlockingProgressHUD.show()
-        imagesListServiceObserver = NotificationCenter.default.addObserver(
-            forName: ImagesListService.didChangeNotification,
-            object: nil, queue: .main) {[weak self] _ in
-                guard let self = self else { return }
-                self.updateTableViewAnimated()
-                UIBlockingProgressHUD.dismiss()
-            }
-        imageListService.fetchPhotosNextPage()
+        imagesListPresenter.view = self
+        imagesListPresenter.viewDidLoad()
         print("ТЕПЕРЬ ТВОЙ TOKEN РАВЕН - \(myToken.token ?? "НЕ ИДЕНТИФИЦИИРУЕТСЯ")")
     }
     
-    /// Метод отвечает за анимированное обновление таблицы
-    private func updateTableViewAnimated() {
-        let oldCount = photoList.count
-        let newCount = imageListService.photos.count
-        photoList = imageListService.photos
-        if oldCount != newCount {
-            tableView.performBatchUpdates {
-                var indexPaths: [IndexPath] = []
-                for i in oldCount..<newCount {
-                    indexPaths.append(IndexPath(row: i, section: 0))
-                }
-                tableView.insertRows(at: indexPaths, with: .automatic)
-            } completion: { _ in }
-        }
+    /// Загрузка фото из презентера в ленту
+    func importImagesToTable(oldCount: Int, newCount: Int) {
+        tableView.performBatchUpdates {
+            photoList = imageListService.photos
+            let indexPaths = (oldCount..<newCount).map {i in IndexPath(row: i, section: 0)}
+            tableView.insertRows(at: indexPaths, with: .automatic)
+        } completion: { _ in }
     }
     
     /// Метод настройки параметров ячейки
@@ -110,6 +105,20 @@ final class ImagesListViewController: UIViewController {
         guard indexPath.row + 1 == photos.count else {return}
         imageListService.fetchPhotosNextPage() 
     }
+    
+    func tapedLike(indexPath: IndexPath) {
+        self.photoList = self.imageListService.photos
+        let photo = photoList[indexPath.row]
+        guard let cell = tableView.cellForRow(at: indexPath) as? ImagesListCell else { return }
+        cell.pictureIsLiked(isLiked: photo.isLiked)
+    }
+    
+    func showLikeAlert() {
+        let alert = UIAlertController(title: "Внимание!", message: "Функция недоступна, попробуйте позже", preferredStyle: .alert)
+        let okButtonAction = UIAlertAction(title: "OK", style: .cancel)
+        alert.addAction(okButtonAction)
+        self.present(alert, animated: true)
+    }
 }
 
 extension ImagesListViewController: UITableViewDelegate {
@@ -154,29 +163,7 @@ extension ImagesListViewController: ImagesListCellDelegate {
     /// Метод установки like
     func imageListCellDidTapLike(_ cell: ImagesListCell) {
         guard let indexPath = tableView.indexPath(for: cell) else { return }
-        
-        let photo = photoList[indexPath.row]
-        UIBlockingProgressHUD.show()
-        imageListService.changeLike(photoId: photo.id, isLike: !photo.isLiked) {[weak self] result in
-            guard let self = self else { return }
-            switch result {
-            case .success:
-                self.photoList = self.imageListService.photos
-                cell.pictureIsLiked(isLiked: !photo.isLiked)
-                UIBlockingProgressHUD.dismiss()
-            case .failure:
-                UIBlockingProgressHUD.dismiss()
-                likeAlert()
-            }
-        }
-    }
-    
-    /// Метод вызова уведомления об ошибке установки like
-    private func likeAlert() {
-        let alert = UIAlertController(title: "Внимание!", message: "Функция недоступна, попробуйте позже", preferredStyle: .alert)
-        let okButtonAction = UIAlertAction(title: "OK", style: .cancel)
-        alert.addAction(okButtonAction)
-        self.present(alert, animated: true)
+        imagesListPresenter.tapLike(indexPath: indexPath)
     }
 }
 
